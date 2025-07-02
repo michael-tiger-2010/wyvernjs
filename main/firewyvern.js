@@ -4,7 +4,7 @@
  */
 
 
-window.firewyrm = window.fw = (function() {
+const firewyrm = (function() {
     // setup local variables
     const queue = [];
     let isProcessing = false;
@@ -310,3 +310,23 @@ window.firewyrm = window.fw = (function() {
     };
 })();
 
+const fw = firewyrm;
+
+
+// Universal export setup
+if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
+    // CommonJS/Node.js environment
+    module.exports = {
+        firewyrm,
+        fw  // Export both names as properties
+    };
+}
+else if (typeof define === 'function' && define.amd) {
+    // AMD/RequireJS environment
+    define([], () => ({ firewyrm, fw }));
+}
+else if (typeof window !== 'undefined') {
+    // Browser global environment
+    window.firewyrm = firewyrm;
+    window.fw = fw; // Expose the shorthand alias
+}

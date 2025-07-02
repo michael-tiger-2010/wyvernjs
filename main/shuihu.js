@@ -7,7 +7,7 @@
 
 // btw shuihu means water-tiger, which is diametric to firewyvern
 
-window.shuihu = window.sh = (function(){
+const shuihu = (function(){
     let levels = {debug: 0, benchmark: 0, warn: 1, error: 2, dire: 3} // no info - just use debug, unneded. dire only if needed.
     let allLogs = [];
     let benchTests = {};
@@ -225,3 +225,23 @@ background-color:rgba(255,0,0,0.4);
 
     }
 })()
+
+const sh = shuihu;
+
+// Universal export setup
+if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
+    // CommonJS/Node.js environment
+    module.exports = {
+        shuihu,
+        sh  // Export both names as properties
+    };
+}
+else if (typeof define === 'function' && define.amd) {
+    // AMD/RequireJS environment
+    define([], () => ({ shuihu, sh }));
+}
+else if (typeof window !== 'undefined') {
+    // Browser global environment
+    window.shuihu = shuihu;
+    window.sh = sh; // Expose the shorthand alias
+}
