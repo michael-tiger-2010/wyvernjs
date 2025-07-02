@@ -7,7 +7,28 @@
  * DOM sugar
  * See docs for usage inst
  */
-dl = {
+dl = ()=>{
+    const objectIdMap = new WeakMap();
+    let idCounter = 0;
+
+    function getObjectId(obj) {
+        if (!objectIdMap.has(obj)) {
+            objectIdMap.set(obj, ++idCounter);
+        }
+        return objectIdMap.get(obj);
+    }
+
+    // OH GOD IT"S A MESS
+    const __eventRegistry = new Map();
+
+    function ensureRegistryEntry(id) {
+        if (!__eventRegistry.has(id)) {
+            __eventRegistry.set(id, new Map());
+        }
+        return __eventRegistry.get(id);
+    }
+    
+    return {
     methods: {
         // Event handling methods
         on: {
@@ -461,3 +482,4 @@ dl = {
         }
     }
 };
+}
