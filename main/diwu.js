@@ -1,10 +1,10 @@
-/* DiLong (dl)
+/* DiWu (dw)
  * DOM sugar
  * See docs for usage inst
  */
 
 
-const dl = (()=>{
+const dw = (()=>{
     const objectIdMap = new WeakMap();
     let idCounter = 0;
 
@@ -479,24 +479,24 @@ const dl = (()=>{
     };
 })();
 
-const dilong = dl;
+const diwu = dw;
 
 
 // Universal export setup
 if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
     // CommonJS/Node.js environment
     module.exports = {
-        dilong,
-        dl  
+        diwu,
+        dw  
     };
 }
 else if (typeof define === 'function' && define.amd) {
     // AMD/RequireJS environment
-    define([], () => ({ dilong, dl }));
+    define([], () => ({ diwu, dw }));
 }
 else if (typeof window !== 'undefined') {
     // Browser global environment
-    window.dilong = dilong;
-    window.dl = dl; 
+    window.diwu = diwu;
+    window.dw = dw; 
 }
 
