@@ -745,7 +745,6 @@ const dw = (()=>{
 const diwu = dw;
 
 
-
 /* TianFeng (tf)
 * init() will populate window be default. Change to tf to populate tf with methods instead.
 * See docs for usage.
@@ -1249,7 +1248,7 @@ const tf = {
                                     }
                                 }
                             }
-                            let t = Number(prop);
+                            let t = typeof(t)=='string' || Number(prop);
                             if(!prop.includes('.') && !isNaN(t)){
                                 //is array index-like
                                 if(Array.isArray(target) && t < 0){
@@ -1273,7 +1272,7 @@ const tf = {
                                     e(val, target);
                                 })
                             }
-                            let t = Number(prop);
+                            let t = typeof(t)=='string' || Number(prop);
                             if(!prop.includes('.') && !isNaN(t)){
                                 if(Array.isArray(target) && t < 0){
                                     target[target.length + t] = val;
@@ -1285,7 +1284,7 @@ const tf = {
                             return Reflect.set(target, prop, val, receiver);
                         },
                         has(target, prop) {
-                            let t = Number(prop);
+                            let t = typeof(t)=='string' || Number(prop);
                             if (!prop.includes('.') && !isNaN(t)) {
                                 
                                 if (Array.isArray(target)) {
@@ -1378,6 +1377,8 @@ const tf = {
 }
 
 const tianfeng = tf;
+
+
 
 
 /* FireWyvern (fw)

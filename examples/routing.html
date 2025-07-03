@@ -1,13 +1,13 @@
 <header>My Website <button onclick="App.state.route=[]">Home</button> <button onclick="App.state.route=['products']">Products</button></header>
-<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.1/main/wyvern.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/wyvern.js"></script>
 <style>
     #views{
         display:flex;
-         flex-wrap: wrap;
-         justify-content: space-around;
-         align-items: center;
-         align-content: space-around;
-         gap:10px;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-items: center;
+        align-content: space-around;
+        gap:10px;
     }
     .product{
         background-color:#aaa;
@@ -32,11 +32,11 @@ App = {
         let build = [];
         let params = [];
         for(let i of r){
-            if(r[i].includes(':')){
-                let p = r[i].split(':');
+            if(i.includes(':')){
+                let p = i.split(':');
                 App.state.viewParams[p[0]] = safeParse(p.slice(1).join(':'));
             }else{
-                build.push(r[i]);
+                build.push(i);
             }
         }
         return build;
@@ -44,7 +44,7 @@ App = {
     routeToHash(){
         return `#/${App.state.route.join('/')}/${Object.entries(App.state.viewParams).map(e=>`${e[0]}:${e[1]}`).join('/')}`
     },
-    state: createStore({route: [], viewParams: createStore({})}), //if empty, that's fine
+    state: createStore({route: [], viewParams: {}}), //if empty, that's fine
     views: $('views'),
     mockFetch: (url)=>{
         if(url=='/api/products'){
@@ -114,12 +114,12 @@ App = {
 
     onRouteChange(){
         sh.debug('routechange')
-        location.hash = routeToHash();
-        renderView();
+        location.hash = App.routeToHash();
+        App.renderView();
     }
 
 }
 
-
+App.init();
 
 </script>
