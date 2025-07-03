@@ -16,17 +16,27 @@ Lightweight tools for intuitive coding. Extend JS without heavy frameworks. Focu
 | FireWyrm | Lightweight, painless async testing & mocking |
 | ShuiHu   | Simple performance tracking & logging         |
 
+## Table of Contents
+- [Beliefs and Features](#beliefs-and-features)
+- [Quickstart and Install](#quickstart-and-install)
+- [Documentation](#documentation)
+- [Support](#support)
+- [Dependencies](#dependencies)
+- [Contributions](#contributions)
+- [License](#license)
+
 ## Beliefs and Features
 
-Programming should be developer-centric to give them the best starting place and ability to create whatever they desire. As such, this library contains four tools that help in different ways, solving the most common pain points for programming:
+Programming should be developer-centric, giving developers the best foundation and freedom to create what they desire. As such, this library contains four tools that help in different ways, solving the most common pain points for programming:
  - **DiWu** (dw, _Earth Tortise_)  
-   Chainable DOM extensions for effortless manipulation. Covers events and simple animations too. These can be disabled or forced (which overrides safe pollution).
+   Chainable DOM extensions for effortless manipulation. Covers events and simple animations too. These can be disabled, or explicitly forced, which overrides the default safe-pollution protections.
 ```js
 myDiv.css({backgroundColor: "lightblue"}).text("Pastel colors are the best")
 ```
- - **TianFeng** (tf, _Sky Pheonix_)  
+ - **TianFeng** (tf, _Sky Phoenix_)  
    Handy utilities for everyday coding tasks. Includes JSX-like DOM tree builders, leading-trailing throttling, a better `setInterval`, device prop detection, conformation & validation, stores, and much more.
 ```js
+// using tree to build DOM
 body.append(tree([
     ['div', {style: "text-align:center"}, [
         ['b', {}, ["WyvernJS"]],
@@ -70,13 +80,13 @@ for(let i = 0; i < 20; i++){
 sh.time.factorialFunc.end();
 ```
 > [!WARNING]
-> Some functionality defaults to polluting `prototype` and global objects (`windoow`). This can be disabled, but feature availability will be reduced.
+> Some functionality defaults to polluting `prototype` and global objects (`window`). This can be disabled, but feature availability will be reduced.
 
 ## Quickstart and Install
-Just download the files in `/main` include whichever features you like as either `ES modules` or just plain `<script>` tags.
+Just download the files in `/main` include whichever features you like (no need for all four) as either `ES modules` or just plain `<script>` tags.
 
 > [!NOTE]
-> No CDNs are supported so far. Straight download is the only option currently.
+> No CDNs are supported so far, but it's planned. Straight download is the only option currently.
 
 ```html
 <!-- script tags for browser -->
