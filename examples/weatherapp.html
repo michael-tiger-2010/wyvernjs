@@ -1,0 +1,158 @@
+<style>
+  body,html{
+  margin:0px;
+  padding:0px;
+}
+*{
+  font-family: sans-serif;
+}
+#app{
+  width:100vw;
+  height:100vh;
+  padding-left:10px;
+  padding-right:10px;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+.sect{
+  padding: 20px;
+  border-bottom:1px solid black;
+  height:80px;
+  background-repeat: no-repeat!important;
+  background-size: contain!important;
+}
+.hoverable{
+  cursor:pointer;
+}
+.hoverable:hover{
+  background-color:rgba(0,0,0,0.1);
+}
+.basic-input{
+  width:60%;
+  height: calc(1em + 10px);
+  font-size: 1em;
+  border: 1px solid black;
+  border-radius: calc(0.5em + 5px);
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/wyvern.js"></script>
+
+<div id="app"></div>
+
+<script>
+dw.init()
+tf.init()
+
+weatherApp = {
+  // the actual weather data
+  weatherData: undefined,
+  // start a state
+  appState: createStore({state: "init"}),
+  // define the app's DOM display
+  el: $('app'),
+  // api key used
+  geocodeAPI: "6866b9a38d4e7196751458oqvea60c0",
+  // holder for url after search
+  weatherAPIEndpoint: undefined,
+
+  // render the search page
+  showSearch(){
+    if(this.appState.state !== 'init') return;
+
+    // render throuh tree() jsx
+    this.el.empty();
+    tree([
+      ["h3", {}, ["Weather App"]],
+      ['input', {placeholder: "Search your location", "class": "basic-input", id: "location-input"}],
+      ['br'],
+      ['i',{},["this uses geocode.maps.co for geocoding"]],
+      ['div', {id: "results"}, []]
+    ],this.el);
+
+    // attach a throttled listener
+    this.el.children[1].on('keyup', throttle((ev)=>{
+      sh.debug('input')
+      this.renderSearch(ev.target.value);
+    }, 1200, {leading:false, trailing:true}))
+  },
+
+  // geocode + display results
+  renderSearch(q){
+    sh.debug('renderSearch: '+q)
+    if(this.appState.state !== 'init') return;
+
+    let results = $('results');
+    results.empty();
+    // fetch the endpoint
+    fetchJson(`https://geocode.maps.co/search?q=${q}&api_key=${this.geocodeAPI}`).then(r=>{
+      // iterate through matches
+      for(let i in r){
+        let el = tree(['div', {"class": "sect hoverable", "data-lat": r[i].lat,"data-lon": r[i].lon}, [
+          ['b', {style:"color:blue"}, [r[i].display_name]],['br'],
+          ['i', {}, [`${r[i]["class"]}, ${r[i]["type"]}`]]
+        ]])[0];
+        el.on('click', (ev)=>{
+          // set state so stuff can't overwrite the load screen
+          this.appState.state = 'loadingToWeather';
+          results.empty();
+          results.html('<br><i>loading...</i>');
+          console.log(ev.target)
+          fetchJson(`https://api.weather.gov/points/${ev.currentTarget.dataset.lat},${ev.currentTarget.dataset.lon}`).then(x=>{
+            weatherAPIEndpoint = x.properties.forcast;
+            this.getWeather();
+          }).catch((err)=>{
+            // fallback to 'try again'
+            this.appState.state = 'init';
+            results.empty();
+            results.html('<br>There was an error. Try again?<br><i>'+err+'</i>');
+          })
+        })
+        results.append(el)
+      }
+    })
+  },
+
+  // render the weather page
+  renderWeather(){
+    if(this.appState.state !== 'weather') return;
+    this.el.empty();
+    // loop through the weather periods
+    for(let i in this.weatherData){
+      this.el.append(tree(
+        // create a div with the cool inset-backgroundimage look
+        ['div', {"class": "sect", style: `background: linear-gradient(90deg,rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 1) 18%, rgba(255, 255, 255, 1) 100%), url("${this.weatherData[i].icon}")`}, [
+          // name of the period, e.g. "Today" "Tonight"
+          ['i',{},[this.weatherData[i].name]], ['br'],
+          // a detailed text forcast
+          ['span',{},[this.weatherData[i].detailedForecast]]
+        ]]
+        )[0])
+    }
+  },
+
+  getWeather(){
+    // fetch US gov't weather endpoint
+    fetchJson('https://api.weather.gov/gridpoints/LOT/65,69/forecast').then(x=>{
+      this.weatherData = x.properties.periods;
+      this.appState.state = 'weather';
+    })
+  },
+
+  init(){
+    // init system
+    this.showSearch();
+    this.appState.when('state').tell(this.stateChange);
+  },
+
+  stateChange(val){
+    // on state change
+    if(val === 'weather'){
+      weatherApp.renderWeather();
+    }
+  }
+}
+
+if(weatherApp.appState.state=='init'){
+  weatherApp.init();
+}
+</script>

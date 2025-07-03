@@ -1,0 +1,120 @@
+<header>My Website <button onclick="App.state.route=[]">Home</button> <button onclick="App.state.route=['products']">Products</button></header>
+<style>
+    #views{
+        display:flex;
+         flex-wrap: wrap;
+         justify-content: space-around;
+         align-items: center;
+         align-content: space-around;
+         gap:10px;
+    }
+    .product{
+        background-color:#aaa;
+        cursor:pointer;
+        width:200px;
+        height:150px;
+        display: inline-block;
+    }
+</style>
+
+<div id="views"></div>
+<script>
+
+App = {
+    processRoute(r){
+        if(!r) return [];
+        // simple and easy hash routing
+        // since I don't want to mess with server configs
+        let r = r.slice(2).split('/');
+        let build = [];
+        let params = [];
+        for(let i of r){
+            if(r[i].includes(':')){
+                let p = r[i].split(':');
+                App.state.viewParams[p[0]] = safeParse(p.slice(1).join(':'));
+            }else{
+                build.push(r[i]);
+            }
+        }
+        return build;
+    },
+    routeToHash(){
+        return `#/${App.state.route.join('/')}/${Object.entries(App.state.viewParams).map(e=>`${e[0]}:${e[1]}`).join('/')}`
+    },
+    state: createStore({route: App.processRoute(location.hash), viewParams: createStore({})}), //if empty, that's fine
+    views: $('views'),
+    mockFetch: (url)=>{
+        if(url=='/api/products'){
+            return [
+                {
+                    "name": "FireWyrm Emblem",
+                    "price": 10,
+                    "desc": "Solid, full metal disk with vermillion red undercoat and a black, traced MathDragon wyrm inset."
+                },{
+                    "name": "Tiger's Claw Pendant",
+                    "price": 15,
+                    "desc": "Hand-carved amber pendant shaped like a tiger's claw, strung on a black leather cord. Symbolizes strength and courage."
+                },{
+                    "name": "Serpent's Scale Ring",
+                    "price": 12,
+                    "desc": "Sterling silver ring with an engraved pattern mimicking snake scales. Adjustable band with a subtle emerald-green enamel wash."
+                },
+            ]
+        }
+    },
+
+    views: {
+        home: {
+            init(){
+                views.empty();
+                tree([['h1',{},["Hello this is the home. Have a nice day. Please see our products."]]],views)
+            }
+        },
+        products: {
+            init(){
+                views.empty();
+                let products = App.mockFetch('/api/products');
+                for(let i in products){
+                    views.append(tree([
+                        'div', {"class": "product"}, [
+                            ['h2', {}, [products[i].name]],
+                            ['i',{},['$'+products[i].price]],['br'],
+                            ['p',{},[products[i].desc]]
+                        ]
+                    ])[0])
+                }
+            }
+        }
+    },
+
+    renderView(){
+        if(App.state.route.length==0){
+            App.views["home"].init();
+            return;
+        }
+
+        // if it's a nested page then go find it
+        let page = App.views;
+        for(var i of App.state.route){
+            page = page[i];
+        }
+        page.init();
+    },
+
+    init(){
+        App.state.when('route').tell(App.onRouteChange);
+        if(App.state.route.length==0){
+            location.hash='#/';
+        }
+    },
+
+    onRouteChange(){
+        location.hash = routeToHash();
+        renderView();
+    }
+
+}
+
+
+
+</script>

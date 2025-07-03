@@ -118,7 +118,7 @@ const tf = {
             context['urlQuery'] = new URLSearchParams(window.location.search);
                         
             // making this easier too
-            window["query"] = new Proxy({},{
+            context["query"] = new Proxy({},{
                 get: (target, key) => urlQuery.get(key),
                 set: (target, key, value) => {
                     if(value===undefined){
@@ -129,7 +129,6 @@ const tf = {
                     history.replaceState(null, '', '?' + urlQuery.toString());
                 }
             });
-
         }
 
         if (options.validate || options.validate==undefined) {
@@ -542,6 +541,15 @@ const tf = {
                             return store;
                             }
                         };
+                    },
+                    ownKeys(target) {
+                        return Reflect.ownKeys(target).filter(key => key !== 'when');
+                    },
+                    getOwnPropertyDescriptor(target, prop) {
+                        if (prop === 'when') {
+                            return undefined;
+                        }
+                        return Reflect.getOwnPropertyDescriptor(target, prop);
                     }
                 };
 

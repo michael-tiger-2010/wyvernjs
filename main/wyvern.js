@@ -1,3 +1,251 @@
+
+/* ShuiHu (sh)
+ * Logging and Timing
+ * Check docs for how to use
+ */
+
+
+// btw shuihu means water-tiger, which is diametric to firewyvern
+
+const shuihu = (function(){
+    let levels = {debug: 0, benchmark: 0, warn: 1, error: 2, dire: 3} // no info - just use debug, unneded. dire only if needed.
+    let allLogs = [];
+    let benchTests = {};
+    let updateFunction = undefined;
+
+    // record, timestamp, + format the log, then push it to the logs object
+    function _log(statement, context='none', label){
+        const now = new Date();
+
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+        const milliseconds = now.getMilliseconds();
+        // time string for timestamp yay
+        const timestamp = hours+':'+minutes+';'+seconds+'.'+milliseconds; //faster than template literal
+        let logObject = {statement, context, label, timestamp};
+        console[["log","warn","error"][Math.min(levels[label],2)]](timestamp, "["+label+"] "+statement, context=='none'?'':context);
+        allLogs.push(logObject);
+        if(updateFunction){
+            updateFunction();
+        }
+
+    }
+ 
+    // Timing Function:
+    // time.label.start() 
+    // time.label.step(flag)
+    // time.label.stop()
+    // that sends a 'time' label to the logger, with the real starttime, delta steptimes, and delta stoptime.
+
+    // TIME THOUGHTS: 
+    // proxy adds 0.02ms overhead
+    // performance.now is negligable
+    // using Object is 0.05ms overhead
+    // using Uint32 is negligable
+    // total: ~0.06ms overhead
+    // acceptable for standard performance
+    // syntax sugar is my top priority
+    // speed is second
+    let time = new Proxy({},{
+        get(target, prop){
+            let label = prop;
+            return {
+                start(){
+                    //check if name is already used
+                    if(prop in benchTests){
+                        // don't question my error reporting style
+                        // it's a ">" after every conditional split/call chain
+
+                        sh.error('sh>time>start was called with a currently used label');
+                        return null;
+                    }
+                    // if not record starttime
+                    let perf = Math.round(performance.now() * 10) / 10;
+                    benchTests[prop] = {data: new Uint32Array(1000), index:0, startTime: perf}
+                },
+                step(flag){
+                    //add a step flag
+
+                    //flags need to be numbers
+                    if(typeof flag !== 'number'){
+                        sh.error('sh>time>step>flag needs to be a number');
+                        return null;
+                    }
+
+                    // get current time
+                    let perf = Math.round(performance.now() * 10) / 10;
+                    let ct = benchTests[prop];
+                    // check if the test exists
+                    if(!ct){
+                        sh.error('sh>time>step>ct does not exist, benchmark does not exist');
+                        return null;
+                    }
+                    // check if the test's over the unit32 array limit
+                    if(ct.index>998){
+                        sh.error('sh>time>step>ct.index over 998, max step creation is 1000 steps');
+                        return null;
+                    }
+                    ct.data[ct.index] = perf-ct.startTime;
+                    ct.data[ct.index+1] = flag;
+                    ct.index = ct.index + 2;
+                },
+                stop(){
+                    //stop benchmark and log
+
+                    // get total time
+                    let perf = Math.round(performance.now() * 10) / 10;
+                    let ct = benchTests[prop];
+
+                    // check if the benchmark exists or not
+                    if(!ct){
+                        sh.error('sh>time>stop>ct does not exist, benchmark does not exist');
+                        return null;
+                    }
+                    // if so, make a string of the recorded data
+                    let string = `benchmark: ${prop}\nStart: ${ct.startTime}\nEnd: ${perf}\nDiff: ${perf-ct.startTime}\nSteps:\n`;
+                    for(let i = 0; i < ct.index; i=i+2){
+                        string = string + `${(i/2)+1} f${ct.data[i+1]}: ${ct.data[i]}\n`;
+                    }
+
+                    delete benchTests[prop]
+
+                    // log the data
+                    _log(string, undefined, 'benchmark');
+                },
+                cancel(){
+                    // check if it's a thing
+                    if(!benchTests[prop]){
+                        sh.error('sh>time>cancel>benchTests[prop] does not exist, benchmark does not exist');
+                        return null;
+                    }
+                    // if not, remove it!
+                    delete benchTests[prop];
+                }
+            }
+        }
+    })
+
+    // stringify with checking
+    function safeStringify(obj) {
+        try {
+            return JSON.stringify(obj);
+        } catch (e) {
+            return '[Unserializable object]';
+        }
+    }
+
+    return {
+
+        //give all the log funcs
+        debug(statement, context){_log(statement, context, 'debug')},
+        log(statement, context){_log(statement, context, 'debug')},
+        warn(statement, context){_log(statement, context, 'warn')},
+        error(statement, context){_log(statement, context, 'error')},
+        dire(statement, context){_log(statement, context, 'dire')},
+        time,
+        outputLogs(label = "debug", serialize = true, lastAmount = Infinity){
+            // filter by label
+            let logs = allLogs.filter(e=>levels[e.label]>=levels[label]).slice(-lastAmount);
+
+            // output the logs
+            let output = [];
+            for(let i = 0; i < logs.length; i++){
+                // performance overhead from template overhead is 90M ops per sec, which should be fast enough ig
+                output.push({});
+                output[i].msg = `[${logs[i].label}] ${logs[i].statement}`;
+                output[i].label = logs[i].label
+                if(serialize){
+                    output[i].context = safeStringify(logs[i].context);
+                }else{
+                    output[i].context = logs[i].context;
+                }
+            }
+            return output;
+        },
+        /*
+STYLE:
+div.logholder{
+font-size:0px;
+}
+div.log{
+border-bottom:1px solid grey;
+display:inline-block;
+font-size:13px;
+font-family:monospace;
+color:white;
+}
+div.l1{
+background-color:rgba(120,120,0.2);
+}
+div.l2{
+background-color:rgba(200,80,0,0.2);
+}
+div.l3{
+background-color:rgba(255,0,0,0.4);
+}
+        */
+
+        //output logs into an element
+        outputElementLogs(label, lastAmount=100){
+            // there is an additional library this is normally included in.
+            // translate this to normal JS if out of library.
+
+            // REQUIRES TIANFENG
+            let opts = sh.outputLogs(label, false, lastAmount);
+            let children = [];
+            for(var i of opts){
+                let contextString = Object.entries(i.context).map(e=>e[0]+': '+safeStringify(e[1])+'\n');
+                children.push(
+                    document.createElement('div')
+                            .text(i.msg+'\n'+contextString)
+                            .setClasses(["log", "l"+levels[i.label]])
+                );
+            }
+            return children;
+        },
+
+        //create the element
+        createLogHolder(parent = window.document.body){
+
+            parent.appendChild(
+                document.createElement('div')
+                        .css({position:"fixed", bottom:"0px", top:"0px", width:"20vw", height:"100vh", backgroundColor: "rgba(0,0,0,0.3)"})
+                        .setClasses('logholder')
+            )
+        },
+        // set the function to call on update
+        setUpdateFn(fn){
+            this.updateFunction = fn;
+        },
+        //clear logs
+        clear(){
+            allLogs = [];
+        }
+
+    }
+})()
+
+const sh = shuihu;
+
+// Universal export setup
+if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
+    // CommonJS/Node.js environment
+    module.exports = {
+        shuihu,
+        sh  // Export both names as properties
+    };
+}
+else if (typeof define === 'function' && define.amd) {
+    // AMD/RequireJS environment
+    define([], () => ({ shuihu, sh }));
+}
+else if (typeof window !== 'undefined') {
+    // Browser global environment
+    window.shuihu = shuihu;
+    window.sh = sh; // Expose the shorthand alias
+}
+
 /* DiWu (dw)
  * DOM sugar
  * See docs for usage inst
@@ -61,12 +309,35 @@ const dw = (()=>{
                         listener.apply(this, args); 
                         this.off(eventType, wrappedListener); 
                     };
+                
                     if (!registry.has(eventType)) {
                         registry.set(eventType, new Map());
                     }
                     registry.get(eventType).set(wrappedListener, options);
                     this.addEventListener(eventType, wrappedListener, { ...options, once: true });
                     return this;
+                }
+            },
+
+            promiseMeOnce: {
+                parent: EventTarget.prototype,
+                func: function(eventType, listener, options) {
+                    const id = getObjectId(this);
+                    const registry = ensureRegistryEntry(id);
+                    let wrappedListener = undefined;
+                    let promise = new Promise((res)=>{
+                        wrappedListener = function(...args) {
+                            res();
+                            listener.apply(this, args); 
+                            this.off(eventType, wrappedListener); 
+                        };
+                    })
+                    if (!registry.has(eventType)) {
+                        registry.set(eventType, new Map());
+                    }
+                    registry.get(eventType).set(wrappedListener, options);
+                    this.addEventListener(eventType, wrappedListener, { ...options, once: true });
+                    return promise;
                 }
             },
             
@@ -356,6 +627,15 @@ const dw = (()=>{
                     }
                     return this; // *ch*
                 }
+            },
+
+            wait: {
+                parent: Promise.prototype,
+                func: function (ms) {
+                    return this.then(
+                        result => new Promise(res => setTimeout(() => res(result), ms))
+                    )
+                }
             }
         },
         
@@ -482,551 +762,23 @@ const dw = (()=>{
 const diwu = dw;
 
 
-/* FireWyvern (fw)
- * Test and Mocks
- * See Docs for usage notes
- */
-
-
-const firewyrm = (function() {
-    // setup local variables
-    const queue = [];
-    let isProcessing = false;
-    let currentSection = null;
-    let testCount = 0;
-    let passCount = 0;
-    const logs = [];
-    let sectionLogs = [];
-    let sectionTestCount = 0;
-    let sectionPassCount = 0;
-    let onProgressCallback = null;
-    let runningTest = false;
-    let mocks = [];
-
-    //add task to queue
-    const enqueue = (task) => {
-        queue.push(task);
-        if (!isProcessing) processQueue();
+// Universal export setup
+if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
+    // CommonJS/Node.js environment
+    module.exports = {
+        diwu,
+        dw  
     };
-
-    // process the queue
-    const processQueue = async () => {
-        if (isProcessing) return;
-        isProcessing = true;
-        
-        while (queue.length > 0) {
-            const task = queue.shift();
-            await task();
-        }
-        
-        isProcessing = false;
-    };
-
-    // log messages
-    const log = (message) => {
-        const output = message.replace(/\n/g, '\n  ');
-        
-        // Buffer the logs for ordered output
-        if (currentSection) {
-            sectionLogs.push(`  ${output}`);
-        } else {
-            logs.push(output);
-        }
-
-    };
-
-    // render a section
-    const flushSection = () => {
-        if (currentSection && sectionLogs.length > 0) {
-            logs.push(`\n‎===‎ ${currentSection} ‎===`);
-            logs.push(...sectionLogs);
-            logs.push(`SECTION RESULTS: ${sectionPassCount}/${sectionTestCount} passed`);
-            logs.push(sectionPassCount==sectionTestCount? '‎ ‎✅ Passed' : '‎ ‎❌ Failed');
-            sectionLogs = [];
-            sectionTestCount = 0;
-            sectionPassCount = 0;
-            currentSection = null;
-        }
-    };
-
-    // create a test
-    const createTest = (statement, testFunc) => {
-        return async () => {
-            const testNumber = ++testCount;
-            const sectionNumber = sectionTestCount++;
-            const prefix = currentSection ? `${currentSection} ${sectionNumber}` : `Test ${testNumber}`;
-            
-            log(`‎ ${prefix}: ${statement || 'unnamed test'}`);
-            
-            try {
-                const result = await (typeof testFunc === 'function' ? testFunc() : testFunc);
-                const success = !!result;
-                if (success) {
-                    passCount++;
-                    sectionPassCount++;
-                }
-                log(success ? '‎ ‎ ✅ Passed' : '‎ ‎ ❌ Failed');
-                return success;
-            } catch (error) {
-                log(`‎ ‎ ❌ Failed: ${error.message}`);
-                return false;
-            }
-        };
-    };
-
-    // create an assertion
-    const createAssertion = (statement, testValue, runningTest) => {
-        // define assertion system
-        const assertion = (assertionFn) => {
-            const test = async () => {
-                try {
-                    const value = await (typeof testValue === 'function' ? testValue() : testValue);
-                    return await assertionFn(value);
-                } catch (error) {
-                    log(`‎ ‎ ❌ Assertion error: ${error.message}`);
-                    return false;
-                }
-            };
-
-            enqueue(createTest(statement, test));
-            if(!runningTest){
-                fw.end(false);
-            }
-
-            return fw;
-        };
-
-        // return a list of valid assertions to chain
-        return {
-            closeTo: (expected) => assertion(async (v) => v == expected),
-            is: (expected) => assertion(async (v) => v === expected),
-            isFalsey: () => assertion(async (v) => !v),
-            isTruthy: () => assertion(async (v) => !!v),
-            throws: () => assertion(async (fn) => {
-                if (typeof fn !== 'function') return false;
-                try { await fn(); return false; } 
-                catch { return true; }
-            }),
-            throwsWith: (...args) => assertion(async (fn) => {
-                if (typeof fn !== 'function') return false;
-                try { await fn(...args); return false; } 
-                catch { return true; }
-            }),
-            contains: (expected) => assertion(async (v) => {
-                if (!v || !v.includes) throw new Error('Value is not containable');
-                return v.includes(expected);
-            }),
-            isNull: () => assertion(async (v) => v === null),
-            isUndefined: () => assertion(async (v) => v === undefined),
-            isDefined: () => assertion(async (v) => v !== undefined),
-            isNaN: () => assertion(async (v) => isNaN(v)),
-            isNumber: () => assertion(async (v) => typeof v === 'number'),
-            isString: () => assertion(async (v) => typeof v === 'string'),
-            isBool: () => assertion(async (v) => typeof v === 'boolean'),
-            greaterThan: (expected) => assertion(async (v) => v > expected),
-            greaterThanOrEqual: (expected) => assertion(async (v) => v >= expected),
-            lessThan: (expected) => assertion(async (v) => v < expected),
-            lessThanOrEqual: (expected) => assertion(async (v) => v <= expected),
-            between: (min, max) => assertion(async (v) => v >= min && v <= max),
-            isInstanceOf: (expected) => assertion(async (v) => v instanceof expected),
-            hasProperty: (prop) => assertion(async (v) => v != null && prop in v),
-            hasLength: (expected) => assertion(async (v) => v?.length === expected),
-            matches: (regex) => assertion(async (v) => regex.test(v)),
-            isArray: () => assertion(async (v) => Array.isArray(v)),
-            isObject: () => assertion(async (v) => typeof v === 'object' && v !== null && !Array.isArray(v)),
-            isEmpty: () => assertion(async (v) => {
-                if (v == null) return true;
-                if (Array.isArray(v)) return v.length === 0;
-                if (typeof v === 'object') return Object.keys(v).length === 0;
-                if (typeof v === 'string') return v.length === 0;
-                return false;
-            }),
-            isFunction: () => assertion(async (v) => typeof v === 'function'),
-            deepEquals: (expected) => assertion(async (v) => JSON.stringify(v) === JSON.stringify(expected)),
-            resolvesTo: (expected) => assertion(async (promise) => {
-                const result = await promise;
-                return result === expected;
-            }),
-            failsWith: (expectedError) => assertion(async (promise) => {
-                try {
-                    await promise;
-                    return false;
-                } catch (err) {
-                    return err instanceof expectedError;
-                }
-            }),
-            isDate: () => assertion(async (v) => v instanceof Date),
-            isEven: () => assertion(async (v) => typeof v === 'number' && v % 2 === 0),
-            isOdd: () => assertion(async (v) => typeof v === 'number' && v % 2 !== 0),
-            isPositive: () => assertion(async (v) => typeof v === 'number' && v > 0),
-            isNegative: () => assertion(async (v) => typeof v === 'number' && v < 0),
-            isInteger: () => assertion(async (v) => Number.isInteger(v)),
-            isFinite: () => assertion(async (v) => Number.isFinite(v)),
-            isSymbol: () => assertion(async (v) => typeof v === 'symbol'),
-            isPromise: () => assertion(async (v) => v != null && typeof v.then === 'function'),
-            isRegExp: () => assertion(async (v) => v instanceof RegExp)
-        };
-    };
-
-
-    // mock something
-    function mock(fn){
-        const mock = {
-            fn: fn || (()=>{}),
-            obj: undefined,
-            prop: undefined,
-            original: undefined
-        }
-        mocks.push(mock);
-
-        return {
-            replace(obj, prop){
-                mock.obj = obj;
-                mock.prop = prop;
-                mock.original = obj[prop];
-                obj[prop] = mock.fn;
-                return mock;
-            }
-        }
-
-    }
-
-    // restore a mock
-    mock.restore = function(select = undefined){
-        for(mock of mocks){
-            if(select!=undefined && mock.prop!=select) continue;
-            mock.obj[mock.prop] = mock.original;
-        }
-        mocks = [];
-    }
-
-    //main fw functions to IIFE
-    return {
-        loggingfunc: console.log,
-        // start firewyrm (fw.start())
-        start() {
-            this.runningTest = true;
-            enqueue(() => {
-                logs.push('🔥🐲 FIREWYRM TESTING 🔥🐲');
-                logs.push('==========================\n')
-            });
-            return this
-        },
-
-
-        
-        // create a section (fw.section("name"))
-        section(name) {
-            enqueue(() => {
-                flushSection();
-                currentSection = name;
-                sectionTestCount = 0;
-                sectionPassCount = 0;
-            });
-            return this;
-        },
-
-        mock, //mocks (fw.mock(()=>{}}).replace(window, fetch))
-
-        // test (fw.test('Is this true?', ()=>true))
-        test(statement, testFunc) {
-            enqueue(createTest(statement, testFunc));
-            if(!this.runningTest){
-                fw.end(false);
-            }
-            return this;
-        },
-
-        // assert (fw.assert('Math Operations', ()=>double(2)).is(4))
-        assert(statement, testValue) {
-            return createAssertion(statement, testValue, this.runningTest);
-        },
-
-        // end, run tests, and log output
-        end(verbose=true) {
-            return new Promise(resolve => {
-                enqueue(async () => {
-                    flushSection();
-                    
-                    // Add progress reporting
-                    const reportProgress = (message) => {
-                        if (onProgressCallback && typeof onProgressCallback === 'function') {
-                            onProgressCallback(message);
-                        }
-                    };
-                    if(verbose){
-                        reportProgress('\n=== FINAL RESULTS ===');
-                        logs.push('\n=== FINAL RESULTS ===');
-                        
-                        reportProgress(`Total tests: ${testCount}`);
-                        logs.push(`Total tests: ${testCount}`);
-                        
-                        reportProgress(`Passed: ${passCount}`);
-                        logs.push(`Passed: ${passCount}`);
-                        
-                        reportProgress(`Failed: ${testCount - passCount}`);
-                        logs.push(`Failed: ${testCount - passCount}`);
-                    }
-                    // Output all logs in order
-                    for (const message of logs) {
-
-                        this.loggingfunc(message);
-                    }
-                    
-                    // Reset state
-                    logs.length = 0;
-                    testCount = 0;
-                    passCount = 0;
-                    this.runningTest = false;
-
-                    reportProgress('Testing complete');
-                    resolve();
-                });
-            });
-        },
-
-        onprogress: null,  // This will be set by ppl
-        set onprogress(callback) {
-            onProgressCallback = callback;
-        },
-        get onprogress() {
-            return onProgressCallback;
-        }
-    };
-})();
-
-const fw = firewyrm;
-
-
-/* ShuiHu (sh)
- * Logging and Timing
- * Check docs for how to use
- */
-
-
-// btw shuihu means water-tiger, which is diametric to firewyvern
-
-const shuihu = (function(){
-    let levels = {debug: 0, benchmark: 0, warn: 1, error: 2, dire: 3} // no info - just use debug, unneded. dire only if needed.
-    let allLogs = [];
-    let benchTests = {};
-    let updateFunction = undefined;
-
-    // record, timestamp, + format the log, then push it to the logs object
-    function _log(statement, context='none', label){
-        const now = new Date();
-
-        const hours = now.getHours();
-        const minutes = now.getMinutes();
-        const seconds = now.getSeconds();
-        const milliseconds = now.getMilliseconds();
-        // time string for timestamp yay
-        const timestamp = hours+':'+minutes+';'+seconds+'.'+milliseconds; //faster than template literal
-        let logObject = {statement, context, label, timestamp};
-        console[["log","warn","error"][Math.min(levels[label],2)]](timestamp, "["+label+"] "+statement, context=='none'?'':context);
-        allLogs.push(logObject);
-        if(updateFunction){
-            updateFunction();
-        }
-
-    }
- 
-    // Timing Function:
-    // time.label.start() 
-    // time.label.step(flag)
-    // time.label.stop()
-    // that sends a 'time' label to the logger, with the real starttime, delta steptimes, and delta stoptime.
-
-    // TIME THOUGHTS: 
-    // proxy adds 0.02ms overhead
-    // performance.now is negligable
-    // using Object is 0.05ms overhead
-    // using Uint32 is negligable
-    // total: ~0.06ms overhead
-    // acceptable for standard performance
-    // syntax sugar is my top priority
-    // speed is second
-    let time = new Proxy({},{
-        get(target, prop){
-            let label = prop;
-            return {
-                start(){
-                    //check if name is already used
-                    if(prop in benchTests){
-                        // don't question my error reporting style
-                        // it's a ">" after every conditional split/call chain
-
-                        sh.error('sh>time>start was called with a currently used label');
-                        return null;
-                    }
-                    // if not record starttime
-                    let perf = Math.round(performance.now() * 10) / 10;
-                    benchTests[prop] = {data: new Uint32Array(1000), index:0, startTime: perf}
-                },
-                step(flag){
-                    //add a step flag
-
-                    //flags need to be numbers
-                    if(typeof flag !== 'number'){
-                        sh.error('sh>time>step>flag needs to be a number');
-                        return null;
-                    }
-
-                    // get current time
-                    let perf = Math.round(performance.now() * 10) / 10;
-                    let ct = benchTests[prop];
-                    // check if the test exists
-                    if(!ct){
-                        sh.error('sh>time>step>ct does not exist, benchmark does not exist');
-                        return null;
-                    }
-                    // check if the test's over the unit32 array limit
-                    if(ct.index>998){
-                        sh.error('sh>time>step>ct.index over 998, max step creation is 1000 steps');
-                        return null;
-                    }
-                    ct.data[ct.index] = perf-ct.startTime;
-                    ct.data[ct.index+1] = flag;
-                    ct.index = ct.index + 2;
-                },
-                stop(){
-                    //stop benchmark and log
-
-                    // get total time
-                    let perf = Math.round(performance.now() * 10) / 10;
-                    let ct = benchTests[prop];
-
-                    // check if the benchmark exists or not
-                    if(!ct){
-                        sh.error('sh>time>stop>ct does not exist, benchmark does not exist');
-                        return null;
-                    }
-                    // if so, make a string of the recorded data
-                    let string = `benchmark: ${prop}\nStart: ${ct.startTime}\nEnd: ${perf}\nDiff: ${perf-ct.startTime}\nSteps:\n`;
-                    for(let i = 0; i < ct.index; i=i+2){
-                        string = string + `${(i/2)+1} f${ct.data[i+1]}: ${ct.data[i]}\n`;
-                    }
-
-                    delete benchTests[prop]
-
-                    // log the data
-                    _log(string, undefined, 'benchmark');
-                },
-                cancel(){
-                    // check if it's a thing
-                    if(!benchTests[prop]){
-                        sh.error('sh>time>cancel>benchTests[prop] does not exist, benchmark does not exist');
-                        return null;
-                    }
-                    // if not, remove it!
-                    delete benchTests[prop];
-                }
-            }
-        }
-    })
-
-    // stringify with checking
-    function safeStringify(obj) {
-        try {
-            return JSON.stringify(obj);
-        } catch (e) {
-            return '[Unserializable object]';
-        }
-    }
-
-    return {
-
-        //give all the log funcs
-        debug(statement, context){_log(statement, context, 'debug')},
-        log(statement, context){_log(statement, context, 'debug')},
-        warn(statement, context){_log(statement, context, 'warn')},
-        error(statement, context){_log(statement, context, 'error')},
-        dire(statement, context){_log(statement, context, 'dire')},
-        time,
-        outputLogs(label = "debug", serialize = true, lastAmount = Infinity){
-            // filter by label
-            let logs = allLogs.filter(e=>levels[e.label]>=levels[label]).slice(-lastAmount);
-
-            // output the logs
-            let output = [];
-            for(let i = 0; i < logs.length; i++){
-                // performance overhead from template overhead is 90M ops per sec, which should be fast enough ig
-                output.push({});
-                output[i].msg = `[${logs[i].label}] ${logs[i].statement}`;
-                output[i].label = logs[i].label
-                if(serialize){
-                    output[i].context = safeStringify(logs[i].context);
-                }else{
-                    output[i].context = logs[i].context;
-                }
-            }
-            return output;
-        },
-        /*
-STYLE:
-div.logholder{
-font-size:0px;
 }
-div.log{
-border-bottom:1px solid grey;
-display:inline-block;
-font-size:13px;
-font-family:monospace;
-color:white;
+else if (typeof define === 'function' && define.amd) {
+    // AMD/RequireJS environment
+    define([], () => ({ diwu, dw }));
 }
-div.l1{
-background-color:rgba(120,120,0.2);
+else if (typeof window !== 'undefined') {
+    // Browser global environment
+    window.diwu = diwu;
+    window.dw = dw; 
 }
-div.l2{
-background-color:rgba(200,80,0,0.2);
-}
-div.l3{
-background-color:rgba(255,0,0,0.4);
-}
-        */
-
-        //output logs into an element
-        outputElementLogs(label, lastAmount=100){
-            // there is an additional library this is normally included in.
-            // translate this to normal JS if out of library.
-
-            // REQUIRES TIANFENG
-            let opts = sh.outputLogs(label, false, lastAmount);
-            let children = [];
-            for(var i of opts){
-                let contextString = Object.entries(i.context).map(e=>e[0]+': '+safeStringify(e[1])+'\n');
-                children.push(
-                    document.createElement('div')
-                            .text(i.msg+'\n'+contextString)
-                            .setClasses(["log", "l"+levels[i.label]])
-                );
-            }
-            return children;
-        },
-
-        //create the element
-        createLogHolder(parent = window.document.body){
-
-            parent.appendChild(
-                document.createElement('div')
-                        .css({position:"fixed", bottom:"0px", top:"0px", width:"20vw", height:"100vh", backgroundColor: "rgba(0,0,0,0.3)"})
-                        .setClasses('logholder')
-            )
-        },
-        // set the function to call on update
-        setUpdateFn(fn){
-            this.updateFunction = fn;
-        },
-        //clear logs
-        clear(){
-            allLogs = [];
-        }
-
-    }
-})()
-
-const sh = shuihu;
-
 
 /* TianFeng (tf)
 * init() will populate window be default. Change to tf to populate tf with methods instead.
@@ -1148,7 +900,7 @@ const tf = {
             context['urlQuery'] = new URLSearchParams(window.location.search);
                         
             // making this easier too
-            window["query"] = new Proxy({},{
+            context["query"] = new Proxy({},{
                 get: (target, key) => urlQuery.get(key),
                 set: (target, key, value) => {
                     if(value===undefined){
@@ -1159,7 +911,6 @@ const tf = {
                     history.replaceState(null, '', '?' + urlQuery.toString());
                 }
             });
-
         }
 
         if (options.validate || options.validate==undefined) {
@@ -1572,6 +1323,15 @@ const tf = {
                             return store;
                             }
                         };
+                    },
+                    ownKeys(target) {
+                        return Reflect.ownKeys(target).filter(key => key !== 'when');
+                    },
+                    getOwnPropertyDescriptor(target, prop) {
+                        if (prop === 'when') {
+                            return undefined;
+                        }
+                        return Reflect.getOwnPropertyDescriptor(target, prop);
                     }
                 };
 
@@ -1590,10 +1350,434 @@ const tf = {
             }
         }
 
+        if(options.async || options.async==undefined){
+            //yay
+            context["wait"] = function(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            };
+
+            // Wait until a specific time idk this seemed useful
+            context["waitUntil"] = function(targetTime) {
+                const target = targetTime instanceof Date ? targetTime.getTime() : targetTime;
+                const now = Date.now();
+                return context.wait(Math.max(0, target - now));
+            };
+
+            // oooooo finally none of my setTimeout(()=>{}) hacks
+            context["waitFrame"] = function() {
+                return new Promise(resolve => 
+                    setTimeout(resolve, 0)
+                );
+            };
+
+            // retry with the time thing that gmail uses
+            // exponetial backoff it's called
+            context["retry"] = async function(action, { 
+                retries = 3, 
+                delay = 1000, 
+                backoff = 2,
+                shouldRetry = () => true 
+            } = {}) {
+                for (let attempt = 1; attempt <= retries + 1; attempt++) {
+                    try {
+                        return await action();
+                    } catch (error) {
+                        if (attempt > retries || !shouldRetry(error)) throw error;
+                        
+                        const waitTime = delay * Math.pow(backoff, attempt - 1);
+                        await context.wait(waitTime);
+                    }
+                }
+            };
+
+            // parallel execution! and you can define threadcount
+            context["parallel"] = async function(tasks, { concurrency = 5 } = {}) {
+                const results = [];
+                const executing = new Set();
+
+                for (const [i, task] of tasks.entries()) {
+                    if (executing.size >= concurrency) {
+                        await Promise.race(executing);
+                    }
+
+                    const p = Promise.resolve().then(() => task());
+                    executing.add(p);
+                    p.then(() => executing.delete(p));
+                    
+                    results[i] = p;
+                }
+
+                return Promise.all(results);
+            };
+
+            // one by one
+            // through fun reduce functions
+            context["sequence"] = function(tasks) {
+                return tasks.reduce((promise, task) => 
+                    promise.then(prevResults => 
+                        task().then(result => [...prevResults, result])
+                    ), 
+                    Promise.resolve([])
+                );
+            };
+        }
     }
 }
 
 const tianfeng = tf;
+
+
+
+// Universal export setup
+if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
+    // CommonJS/Node.js environment
+    module.exports = {
+        tianfeng,
+        tf
+    };
+}
+else if (typeof define === 'function' && define.amd) {
+    // AMD/RequireJS environment
+    define([], () => ({ tianfeng, tf }));
+}
+else if (typeof window !== 'undefined') {
+    // Browser global environment
+    window.tianfeng = tianfeng;
+    window.tf = tf; // Expose the shorthand alias
+}
+/* FireWyvern (fw)
+ * Test and Mocks
+ * See Docs for usage notes
+ */
+
+
+const firewyrm = (function() {
+    // setup local variables
+    const queue = [];
+    let isProcessing = false;
+    let currentSection = null;
+    let testCount = 0;
+    let passCount = 0;
+    const logs = [];
+    let sectionLogs = [];
+    let sectionTestCount = 0;
+    let sectionPassCount = 0;
+    let onProgressCallback = null;
+    let runningTest = false;
+    let mocks = [];
+
+    //add task to queue
+    const enqueue = (task) => {
+        queue.push(task);
+        if (!isProcessing) processQueue();
+    };
+
+    // process the queue
+    const processQueue = async () => {
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        while (queue.length > 0) {
+            const task = queue.shift();
+            await task();
+        }
+        
+        isProcessing = false;
+    };
+
+    // log messages
+    const log = (message) => {
+        const output = message.replace(/\n/g, '\n  ');
+        
+        // Buffer the logs for ordered output
+        if (currentSection) {
+            sectionLogs.push(`  ${output}`);
+        } else {
+            logs.push(output);
+        }
+
+    };
+
+    // render a section
+    const flushSection = () => {
+        if (currentSection && sectionLogs.length > 0) {
+            logs.push(`\n‎===‎ ${currentSection} ‎===`);
+            logs.push(...sectionLogs);
+            logs.push(`SECTION RESULTS: ${sectionPassCount}/${sectionTestCount} passed`);
+            logs.push(sectionPassCount==sectionTestCount? '‎ ‎✅ Passed' : '‎ ‎❌ Failed');
+            sectionLogs = [];
+            sectionTestCount = 0;
+            sectionPassCount = 0;
+            currentSection = null;
+        }
+    };
+
+    // create a test
+    const createTest = (statement, testFunc) => {
+        return async () => {
+            const testNumber = ++testCount;
+            const sectionNumber = sectionTestCount++;
+            const prefix = currentSection ? `${currentSection} ${sectionNumber}` : `Test ${testNumber}`;
+            
+            log(`‎ ${prefix}: ${statement || 'unnamed test'}`);
+            
+            try {
+                const result = await (typeof testFunc === 'function' ? testFunc() : testFunc);
+                const success = !!result;
+                if (success) {
+                    passCount++;
+                    sectionPassCount++;
+                }
+                log(success ? '‎ ‎ ✅ Passed' : '‎ ‎ ❌ Failed');
+                return success;
+            } catch (error) {
+                log(`‎ ‎ ❌ Failed: ${error.message}`);
+                return false;
+            }
+        };
+    };
+
+    // create an assertion
+    const createAssertion = (statement, testValue, runningTest) => {
+        // define assertion system
+        const assertion = (assertionFn) => {
+            const test = async () => {
+                try {
+                    const value = await (typeof testValue === 'function' ? testValue() : testValue);
+                    return await assertionFn(value);
+                } catch (error) {
+                    log(`‎ ‎ ❌ Assertion error: ${error.message}`);
+                    return false;
+                }
+            };
+
+            enqueue(createTest(statement, test));
+            if(!runningTest){
+                fw.end(false);
+            }
+
+            return fw;
+        };
+
+        // return a list of valid assertions to chain
+        return {
+            closeTo: (expected) => assertion(async (v) => v == expected),
+            is: (expected) => assertion(async (v) => v === expected),
+            isFalsey: () => assertion(async (v) => !v),
+            isTruthy: () => assertion(async (v) => !!v),
+            throws: () => assertion(async (fn) => {
+                if (typeof fn !== 'function') return false;
+                try { await fn(); return false; } 
+                catch { return true; }
+            }),
+            throwsWith: (...args) => assertion(async (fn) => {
+                if (typeof fn !== 'function') return false;
+                try { await fn(...args); return false; } 
+                catch { return true; }
+            }),
+            contains: (expected) => assertion(async (v) => {
+                if (!v || !v.includes) throw new Error('Value is not containable');
+                return v.includes(expected);
+            }),
+            isNull: () => assertion(async (v) => v === null),
+            isUndefined: () => assertion(async (v) => v === undefined),
+            isDefined: () => assertion(async (v) => v !== undefined),
+            isNaN: () => assertion(async (v) => isNaN(v)),
+            isNumber: () => assertion(async (v) => typeof v === 'number'),
+            isString: () => assertion(async (v) => typeof v === 'string'),
+            isBool: () => assertion(async (v) => typeof v === 'boolean'),
+            greaterThan: (expected) => assertion(async (v) => v > expected),
+            greaterThanOrEqual: (expected) => assertion(async (v) => v >= expected),
+            lessThan: (expected) => assertion(async (v) => v < expected),
+            lessThanOrEqual: (expected) => assertion(async (v) => v <= expected),
+            between: (min, max) => assertion(async (v) => v >= min && v <= max),
+            isInstanceOf: (expected) => assertion(async (v) => v instanceof expected),
+            hasProperty: (prop) => assertion(async (v) => v != null && prop in v),
+            hasLength: (expected) => assertion(async (v) => v?.length === expected),
+            matches: (regex) => assertion(async (v) => regex.test(v)),
+            isArray: () => assertion(async (v) => Array.isArray(v)),
+            isObject: () => assertion(async (v) => typeof v === 'object' && v !== null && !Array.isArray(v)),
+            isEmpty: () => assertion(async (v) => {
+                if (v == null) return true;
+                if (Array.isArray(v)) return v.length === 0;
+                if (typeof v === 'object') return Object.keys(v).length === 0;
+                if (typeof v === 'string') return v.length === 0;
+                return false;
+            }),
+            isFunction: () => assertion(async (v) => typeof v === 'function'),
+            deepEquals: (expected) => assertion(async (v) => JSON.stringify(v) === JSON.stringify(expected)),
+            resolvesTo: (expected) => assertion(async (promise) => {
+                const result = await promise;
+                return result === expected;
+            }),
+            failsWith: (expectedError) => assertion(async (promise) => {
+                try {
+                    await promise;
+                    return false;
+                } catch (err) {
+                    return err instanceof expectedError;
+                }
+            }),
+            isDate: () => assertion(async (v) => v instanceof Date),
+            isEven: () => assertion(async (v) => typeof v === 'number' && v % 2 === 0),
+            isOdd: () => assertion(async (v) => typeof v === 'number' && v % 2 !== 0),
+            isPositive: () => assertion(async (v) => typeof v === 'number' && v > 0),
+            isNegative: () => assertion(async (v) => typeof v === 'number' && v < 0),
+            isInteger: () => assertion(async (v) => Number.isInteger(v)),
+            isFinite: () => assertion(async (v) => Number.isFinite(v)),
+            isSymbol: () => assertion(async (v) => typeof v === 'symbol'),
+            isPromise: () => assertion(async (v) => v != null && typeof v.then === 'function'),
+            isRegExp: () => assertion(async (v) => v instanceof RegExp)
+        };
+    };
+
+
+    // mock something
+    function mock(fn){
+        const mock = {
+            fn: fn || (()=>{}),
+            obj: undefined,
+            prop: undefined,
+            original: undefined
+        }
+        mocks.push(mock);
+
+        return {
+            replace(obj, prop){
+                mock.obj = obj;
+                mock.prop = prop;
+                mock.original = obj[prop];
+                obj[prop] = mock.fn;
+                return mock;
+            }
+        }
+
+    }
+
+    // restore a mock
+    mock.restore = function(select = undefined){
+        for(mock of mocks){
+            if(select!=undefined && mock.prop!=select) continue;
+            mock.obj[mock.prop] = mock.original;
+        }
+        mocks = [];
+    }
+
+    //main fw functions to IIFE
+    return {
+        loggingfunc: console.log,
+        // start firewyrm (fw.start())
+        start() {
+            this.runningTest = true;
+            enqueue(() => {
+                logs.push('🔥🐲 FIREWYRM TESTING 🔥🐲');
+                logs.push('==========================\n')
+            });
+            return this
+        },
+
+
+        
+        // create a section (fw.section("name"))
+        section(name) {
+            enqueue(() => {
+                flushSection();
+                currentSection = name;
+                sectionTestCount = 0;
+                sectionPassCount = 0;
+            });
+            return this;
+        },
+
+        mock, //mocks (fw.mock(()=>{}}).replace(window, fetch))
+
+        // test (fw.test('Is this true?', ()=>true))
+        test(statement, testFunc) {
+            enqueue(createTest(statement, testFunc));
+            if(!this.runningTest){
+                fw.end(false);
+            }
+            return this;
+        },
+
+        // assert (fw.assert('Math Operations', ()=>double(2)).is(4))
+        assert(statement, testValue) {
+            return createAssertion(statement, testValue, this.runningTest);
+        },
+
+        // end, run tests, and log output
+        end(verbose=true) {
+            return new Promise(resolve => {
+                enqueue(async () => {
+                    flushSection();
+                    
+                    // Add progress reporting
+                    const reportProgress = (message) => {
+                        if (onProgressCallback && typeof onProgressCallback === 'function') {
+                            onProgressCallback(message);
+                        }
+                    };
+                    if(verbose){
+                        reportProgress('\n=== FINAL RESULTS ===');
+                        logs.push('\n=== FINAL RESULTS ===');
+                        
+                        reportProgress(`Total tests: ${testCount}`);
+                        logs.push(`Total tests: ${testCount}`);
+                        
+                        reportProgress(`Passed: ${passCount}`);
+                        logs.push(`Passed: ${passCount}`);
+                        
+                        reportProgress(`Failed: ${testCount - passCount}`);
+                        logs.push(`Failed: ${testCount - passCount}`);
+                    }
+                    // Output all logs in order
+                    for (const message of logs) {
+
+                        this.loggingfunc(message);
+                    }
+                    
+                    // Reset state
+                    logs.length = 0;
+                    testCount = 0;
+                    passCount = 0;
+                    this.runningTest = false;
+
+                    reportProgress('Testing complete');
+                    resolve();
+                });
+            });
+        },
+
+        onprogress: null,  // This will be set by ppl
+        set onprogress(callback) {
+            onProgressCallback = callback;
+        },
+        get onprogress() {
+            return onProgressCallback;
+        }
+    };
+})();
+
+const fw = firewyrm;
+
+
+// Universal export setup
+if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
+    // CommonJS/Node.js environment
+    module.exports = {
+        firewyrm,
+        fw  // Export both names as properties
+    };
+}
+else if (typeof define === 'function' && define.amd) {
+    // AMD/RequireJS environment
+    define([], () => ({ firewyrm, fw }));
+}
+else if (typeof window !== 'undefined') {
+    // Browser global environment
+    window.firewyrm = firewyrm;
+    window.fw = fw; // Expose the shorthand alias
+}
 
 
 // Universal export setup
