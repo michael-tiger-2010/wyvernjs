@@ -1,20 +1,27 @@
 {
     "name": "@mchen_dragon/wyvernjs",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "Lightweight modular utilities for testing, DOM manipulation, logging, and general JS convenience.",
     "main": "main/wyvern.js",
     "exports": {
-      "./firewyvern": "./main/firewyvern.js",
-      "./shuihu": "./main/shuihu.js",
-      "./diwu": "./main/diwu.js",
-      "./tianfeng": "./main/tianfeng.js",
-      ".": "./main/wyvern.js"
+        "./firewyvern": "./main/firewyvern.js",
+        "./shuihu": "./main/shuihu.js",
+        "./diwu": "./main/diwu.js",
+        "./tianfeng": "./main/tianfeng.js",
+        ".": "./main/wyvern.js"
     },
     "files": [
-      "main"
+        "main"
     ],
     "author": "Michael C",
     "license": "GPL 3.0",
-    "keywords": ["testing", "dom", "logging", "utilities", "lightweight", "wyvern", "js"]
-  }
-  
+    "keywords": [
+        "testing",
+        "dom",
+        "logging",
+        "utilities",
+        "lightweight",
+        "wyvern",
+        "js"
+    ]
+}
