@@ -61,6 +61,7 @@ const dw = (()=>{
                         listener.apply(this, args); 
                         this.off(eventType, wrappedListener); 
                     };
+                
                     if (!registry.has(eventType)) {
                         registry.set(eventType, new Map());
                     }
@@ -69,11 +70,13 @@ const dw = (()=>{
                     return this;
                 }
             },
+
             promiseMeOnce: {
                 parent: EventTarget.prototype,
                 func: function(eventType, listener, options) {
                     const id = getObjectId(this);
                     const registry = ensureRegistryEntry(id);
+                    let wrappedListener = undefined;
                     let promise = new Promise((res)=>{
                         wrappedListener = function(...args) {
                             res();
