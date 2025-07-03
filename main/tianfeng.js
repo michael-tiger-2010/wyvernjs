@@ -522,7 +522,7 @@ const tf = {
                             }
                             if(Object.keys(listeners).includes(prop)){
                                 listeners[prop].forEach(e=>{
-                                    e(prop, val, target);
+                                    e(val, target);
                                 })
                             }
                             let t = Number(prop);
@@ -534,7 +534,7 @@ const tf = {
                                 target[t] = val;
                                 return true;
                             }
-                            return Reflect.set(target, prop, receiver);
+                            return Reflect.set(target, prop, val, receiver);
                         },
                         has(target, prop) {
                             let t = Number(prop);

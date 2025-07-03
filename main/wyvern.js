@@ -228,23 +228,6 @@ background-color:rgba(255,0,0,0.4);
 
 const sh = shuihu;
 
-// Universal export setup
-if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
-    // CommonJS/Node.js environment
-    module.exports = {
-        shuihu,
-        sh  // Export both names as properties
-    };
-}
-else if (typeof define === 'function' && define.amd) {
-    // AMD/RequireJS environment
-    define([], () => ({ shuihu, sh }));
-}
-else if (typeof window !== 'undefined') {
-    // Browser global environment
-    window.shuihu = shuihu;
-    window.sh = sh; // Expose the shorthand alias
-}
 
 /* DiWu (dw)
  * DOM sugar
@@ -761,24 +744,6 @@ const dw = (()=>{
 
 const diwu = dw;
 
-
-// Universal export setup
-if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
-    // CommonJS/Node.js environment
-    module.exports = {
-        diwu,
-        dw  
-    };
-}
-else if (typeof define === 'function' && define.amd) {
-    // AMD/RequireJS environment
-    define([], () => ({ diwu, dw }));
-}
-else if (typeof window !== 'undefined') {
-    // Browser global environment
-    window.diwu = diwu;
-    window.dw = dw; 
-}
 
 
 /* TianFeng (tf)
@@ -1305,7 +1270,7 @@ const tf = {
                             }
                             if(Object.keys(listeners).includes(prop)){
                                 listeners[prop].forEach(e=>{
-                                    e(prop, val, target);
+                                    e(val, target);
                                 })
                             }
                             let t = Number(prop);
@@ -1317,7 +1282,7 @@ const tf = {
                                 target[t] = val;
                                 return true;
                             }
-                            return Reflect.set(target, prop, receiver);
+                            return Reflect.set(target, prop, val, receiver);
                         },
                         has(target, prop) {
                             let t = Number(prop);
@@ -1414,25 +1379,6 @@ const tf = {
 
 const tianfeng = tf;
 
-
-
-// Universal export setup
-if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
-    // CommonJS/Node.js environment
-    module.exports = {
-        tianfeng,
-        tf
-    };
-}
-else if (typeof define === 'function' && define.amd) {
-    // AMD/RequireJS environment
-    define([], () => ({ tianfeng, tf }));
-}
-else if (typeof window !== 'undefined') {
-    // Browser global environment
-    window.tianfeng = tianfeng;
-    window.tf = tf; // Expose the shorthand alias
-}
 
 /* FireWyvern (fw)
  * Test and Mocks
