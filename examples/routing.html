@@ -1,4 +1,5 @@
 <header>My Website <button onclick="App.state.route=[]">Home</button> <button onclick="App.state.route=['products']">Products</button></header>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.1/main/wyvern.js"></script>
 <style>
     #views{
         display:flex;
@@ -19,13 +20,15 @@
 
 <div id="views"></div>
 <script>
+dw.init();
+tf.init();
 
 App = {
     processRoute(r){
         if(!r) return [];
         // simple and easy hash routing
         // since I don't want to mess with server configs
-        let r = r.slice(2).split('/');
+        r = r.slice(2).split('/');
         let build = [];
         let params = [];
         for(let i of r){
@@ -41,7 +44,7 @@ App = {
     routeToHash(){
         return `#/${App.state.route.join('/')}/${Object.entries(App.state.viewParams).map(e=>`${e[0]}:${e[1]}`).join('/')}`
     },
-    state: createStore({route: App.processRoute(location.hash), viewParams: createStore({})}), //if empty, that's fine
+    state: createStore({route: [], viewParams: createStore({})}), //if empty, that's fine
     views: $('views'),
     mockFetch: (url)=>{
         if(url=='/api/products'){
@@ -102,6 +105,7 @@ App = {
     },
 
     init(){
+        App.state.route = App.processRoute(location.hash);
         App.state.when('route').tell(App.onRouteChange);
         if(App.state.route.length==0){
             location.hash='#/';
@@ -109,6 +113,7 @@ App = {
     },
 
     onRouteChange(){
+        sh.debug('routechange')
         location.hash = routeToHash();
         renderView();
     }

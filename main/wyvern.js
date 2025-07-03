@@ -780,6 +780,7 @@ else if (typeof window !== 'undefined') {
     window.dw = dw; 
 }
 
+
 /* TianFeng (tf)
 * init() will populate window be default. Change to tf to populate tf with methods instead.
 * See docs for usage.
@@ -1261,92 +1262,79 @@ const tf = {
             // since i use global variables a lot
             // but for gamestate management 
             // it's GOLD
-            window.createStore = (initialState) => {
-                const state = new Proxy({...initialState}, {
-                    set(target, property, value, receiver) {
-                        const oldValue = target[property];
-                        target[property] = value;
-                        
-                        // *boom* [trigger] em'
-                        if (listeners[property]) {
-                            listeners[property].forEach(({preProcessor, callback}) => {
-                            const processedValue = preProcessor 
-                                ? preProcessor(value, target) 
-                                : value;
-                            callback(processedValue, target);
-                            });
-                        }
-                        
-                        // [trigger] em' all (if they want it [wildcards])
-                        if (listeners['*']) {
-                            listeners['*'].forEach(({callback}) => {
-                            callback({key: property, value}, target);
-                            });
-                        }
-                        
-                        return true;
+            window.createStore = (init) => {
+                function deepProxy(value, path=[]){
+                    if(typeof value !== "object" || value === null) return value;
+                    for(let i of Object.keys(value)){
+                        value[i] = deepProxy(value[i], path.concat([i]));
                     }
-                });
-
-                const listeners = {};
-
-                const store = {
-                    ...state,
                     
-                    when(property, preProcessor) {
-                        // *wildcard*
-                        if (arguments.length === 0) {
-                            return {
-                            tell: (callback) => {
-                                if (!callback) throw new Error('Callback function is required');
+                    let listeners = {};
+                    return new Proxy(value, {
+                        get(target, prop, receiver){
+                            if(prop=='when'){
+                                return function(wprop){
+                                    return{
+                                        tell(listener){
+                                            if(!Object.keys(listeners).includes(wprop)){
+                                                listeners[wprop] = [];
+                                            }
+                                            listeners[wprop].push(listener);
+                                        }
+                                    }
+                                }
+                            }
+                            let t = Number(prop);
+                            if(!prop.includes('.') && !isNaN(t)){
+                                //is array index-like
+                                if(Array.isArray(target) && t < 0){
+                                    return target[target.length + t];
+                                }
+                                return target[t];
+                            }
+                            return Reflect.get(target, prop, receiver);
+                        },
+                        set(target, prop, val, receiver){
+                            if(typeof val === 'object' && val !== null){
+                                val = deepProxy(val, path.concat([prop]));
+                            }
+                            if(Object.keys(listeners).includes('*')){
+                                listeners['*'].forEach(e=>{
+                                    e(prop, val, target);
+                                })
+                            }
+                            if(Object.keys(listeners).includes(prop)){
+                                listeners[prop].forEach(e=>{
+                                    e(prop, val, target);
+                                })
+                            }
+                            let t = Number(prop);
+                            if(!prop.includes('.') && !isNaN(t)){
+                                if(Array.isArray(target) && t < 0){
+                                    target[target.length + t] = val;
+                                    return true;
+                                }
+                                target[t] = val;
+                                return true;
+                            }
+                            return Reflect.set(target, prop, receiver);
+                        },
+                        has(target, prop) {
+                            let t = Number(prop);
+                            if (!prop.includes('.') && !isNaN(t)) {
                                 
-                                if (!listeners['*']) {
-                                listeners['*'] = [];
+                                if (Array.isArray(target)) {
+                                    return t >= -target.length && t < target.length;
                                 }
                                 
-                                listeners['*'].push({callback});
-                                return store;
-                            }
-                            };
-                        }
-                        
-                        // not wildcard
-                        return {
-                            tell: (callback) => {
-                            if (!callback) throw new Error('Callback function is required');
-                            
-                            if (!listeners[property]) {
-                                listeners[property] = [];
+                                return t in target;
                             }
                             
-                            listeners[property].push({preProcessor, callback});
-                            return store;
-                            }
-                        };
-                    },
-                    ownKeys(target) {
-                        return Reflect.ownKeys(target).filter(key => key !== 'when');
-                    },
-                    getOwnPropertyDescriptor(target, prop) {
-                        if (prop === 'when') {
-                            return undefined;
+                            return Reflect.has(target, prop);
                         }
-                        return Reflect.getOwnPropertyDescriptor(target, prop);
-                    }
-                };
-
-                // proxy magic [god proxies are literally magic]
-                return new Proxy(store, {
-                    get(target, prop) {
-                        if (prop in state) return state[prop];
-                        if (prop in store) return store[prop];
-                        return undefined;
-                    },
-                    set(target, prop, value) {
-                        state[prop] = value;
-                        return true;
-                    }
-                });
+                    })
+                }
+                return deepProxy(init);
             }
         }
 
@@ -1445,6 +1433,7 @@ else if (typeof window !== 'undefined') {
     window.tianfeng = tianfeng;
     window.tf = tf; // Expose the shorthand alias
 }
+
 /* FireWyvern (fw)
  * Test and Mocks
  * See Docs for usage notes
@@ -1759,6 +1748,25 @@ const firewyrm = (function() {
 })();
 
 const fw = firewyrm;
+
+
+// Universal export setup
+if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
+    // CommonJS/Node.js environment
+    module.exports = {
+        firewyrm,
+        fw  // Export both names as properties
+    };
+}
+else if (typeof define === 'function' && define.amd) {
+    // AMD/RequireJS environment
+    define([], () => ({ firewyrm, fw }));
+}
+else if (typeof window !== 'undefined') {
+    // Browser global environment
+    window.firewyrm = firewyrm;
+    window.fw = fw; // Expose the shorthand alias
+}
 
 
 // Universal export setup
