@@ -149,4 +149,4 @@ This project is under the `GPL-3.0 license`. See `LICENSE` for more details.
 
 > [!NOTE]
 > Wow! Since you read all the way here, a fun fact:  
-> The three names shuihu, tianfeng, and diwu are all from the Chinese language, in pinyin. 
+> The three names shuihu, tianfeng, and diwu are all from the Chinese language, in pinyin. And yes, I know it isn't strict Chinese mythology, but it's fun enough so I'll take it.
