@@ -23,6 +23,7 @@ Lightweight tools for intuitive coding. Extend JS without heavy frameworks. Focu
 - [Support](#support)
 - [Dependencies](#dependencies)
 - [Contributions](#contributions)
+- [Comparisons](#Comparisons)
 - [License](#license)
 
 ## Beliefs and Features
@@ -267,7 +268,7 @@ Use WyvernJS for a unified, complete native-like workflow with zero config and f
 Use others for actual ecosystem and for complex multi-page webapps.
 
 ## License
-This project is under the `GPL-3.0 license`. See `LICENSE` for more details.
+This project is under the `GPL-3.0 license`. See `LICENSE` for more details. This requires all derivative works to be open-source.
 
 > [!NOTE]
 > Wow! Since you read all the way here, a fun fact:  
