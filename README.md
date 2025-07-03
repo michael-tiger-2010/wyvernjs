@@ -94,24 +94,24 @@ npm i @mchen_dragon/wyvernjs
 **Browser CDN:**
 ```html
 <!-- script tags for browser -->
-<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/diwu.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/tianfeng.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/firewyrm.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/shuihu.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.4/main/diwu.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.4/main/tianfeng.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.4/main/firewyrm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.4/main/shuihu.js"></script>
 
 <!-- or all at once -->
-<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/wyvern.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.4/main/wyvern.js"></script>
 ```
 
 ```js
 // ES module imports
-import {dw, diwu} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/diwu.js';
-import {tf, tianfeng} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/tianfeng.js';
-import {fw, firewyrm} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/firewyrm.js';
-import {sh, shuihu} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/shuihu.js';
+import {dw, diwu} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.4/main/diwu.js';
+import {tf, tianfeng} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.4/main/tianfeng.js';
+import {fw, firewyrm} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.4/main/firewyrm.js';
+import {sh, shuihu} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.4/main/shuihu.js';
 
 // All at once
-import {dw, diwu, tf, tianfeng, fw, firewyrm, sh, shuihu} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.3/main/wyvern.js';
+import {dw, diwu, tf, tianfeng, fw, firewyrm, sh, shuihu} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.4/main/wyvern.js';
 ```
 
 Then initialize them:
