@@ -1,6 +1,7 @@
 ![LogoTitle](https://github.com/user-attachments/assets/17233191-c8da-4193-ae37-c4a63869497f)
 
 > "The missing wings of vanilla JavaScript"
+
 Lightweight tools for intuitive coding. Extend JS without heavy frameworks. Focused on the developer experience.
 
 ## Why wyvernjs?
