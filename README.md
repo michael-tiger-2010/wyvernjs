@@ -1,4 +1,4 @@
-![Title](https://github.com/user-attachments/assets/3c49c188-50bb-494b-aee8-68c42812c4fd)
+![LogoTitle](https://github.com/user-attachments/assets/17233191-c8da-4193-ae37-c4a63869497f)
 
 > "The missing wings of vanilla JavaScript"
 Lightweight tools for intuitive coding. Extend JS without heavy frameworks. Focused on the developer experience.
