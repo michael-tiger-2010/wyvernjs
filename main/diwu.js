@@ -69,6 +69,26 @@ const dw = (()=>{
                     return this;
                 }
             },
+            promiseMeOnce: {
+                parent: EventTarget.prototype,
+                func: function(eventType, listener, options) {
+                    const id = getObjectId(this);
+                    const registry = ensureRegistryEntry(id);
+                    let promise = new Promise((res)=>{
+                        wrappedListener = function(...args) {
+                            res();
+                            listener.apply(this, args); 
+                            this.off(eventType, wrappedListener); 
+                        };
+                    })
+                    if (!registry.has(eventType)) {
+                        registry.set(eventType, new Map());
+                    }
+                    registry.get(eventType).set(wrappedListener, options);
+                    this.addEventListener(eventType, wrappedListener, { ...options, once: true });
+                    return promise;
+                }
+            },
             
             off: {
                 parent: EventTarget.prototype,
@@ -355,6 +375,15 @@ const dw = (()=>{
                         this.hide(); //hehe using my own funcs
                     }
                     return this; // *ch*
+                }
+            },
+
+            wait: {
+                parent: Promise.prototype,
+                func: function (ms) {
+                    return this.then(
+                        result => new Promise(res => setTimeout(() => res(result), ms))
+                    )
                 }
             }
         },

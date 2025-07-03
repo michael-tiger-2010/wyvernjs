@@ -560,6 +560,77 @@ const tf = {
             }
         }
 
+        if(options.async || options.async==undefined){
+            //yay
+            context["wait"] = function(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            };
+
+            // Wait until a specific time idk this seemed useful
+            context["waitUntil"] = function(targetTime) {
+                const target = targetTime instanceof Date ? targetTime.getTime() : targetTime;
+                const now = Date.now();
+                return context.wait(Math.max(0, target - now));
+            };
+
+            // oooooo finally none of my setTimeout(()=>{}) hacks
+            context["waitFrame"] = function() {
+                return new Promise(resolve => 
+                    setTimeout(resolve, 0)
+                );
+            };
+
+            // retry with the time thing that gmail uses
+            // exponetial backoff it's called
+            context["retry"] = async function(action, { 
+                retries = 3, 
+                delay = 1000, 
+                backoff = 2,
+                shouldRetry = () => true 
+            } = {}) {
+                for (let attempt = 1; attempt <= retries + 1; attempt++) {
+                    try {
+                        return await action();
+                    } catch (error) {
+                        if (attempt > retries || !shouldRetry(error)) throw error;
+                        
+                        const waitTime = delay * Math.pow(backoff, attempt - 1);
+                        await context.wait(waitTime);
+                    }
+                }
+            };
+
+            // parallel execution! and you can define threadcount
+            context["parallel"] = async function(tasks, { concurrency = 5 } = {}) {
+                const results = [];
+                const executing = new Set();
+
+                for (const [i, task] of tasks.entries()) {
+                    if (executing.size >= concurrency) {
+                        await Promise.race(executing);
+                    }
+
+                    const p = Promise.resolve().then(() => task());
+                    executing.add(p);
+                    p.then(() => executing.delete(p));
+                    
+                    results[i] = p;
+                }
+
+                return Promise.all(results);
+            };
+
+            // one by one
+            // through fun reduce functions
+            context["sequence"] = function(tasks) {
+                return tasks.reduce((promise, task) => 
+                    promise.then(prevResults => 
+                        task().then(result => [...prevResults, result])
+                    ), 
+                    Promise.resolve([])
+                );
+            };
+        }
     }
 }
 
