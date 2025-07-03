@@ -85,23 +85,34 @@ sh.time.factorialFunc.end();
 ## Quickstart and Install
 Just download the files in `/main` include whichever features you like (no need for all four) as either `ES modules` or just plain `<script>` tags.
 
+**NPM:**
+```cmd
+npm i @mchen_dragon/wyvernjs
+```
 > [!NOTE]
-> No CDNs are supported so far, but it's planned. Straight download is the only option currently.
+> See below for compatibility with NodeJS.
 
+**Browser CDN:**
 ```html
 <!-- script tags for browser -->
-<script src="diwu.js"></script>
-<script src="tianfeng.js"></script>
-<script src="firewyrm.js"></script>
-<script src="shuihu.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/diwu.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/tianfeng.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/firewyrm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/shuihu.js"></script>
+
+<!-- or all at once -->
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/wyvern.js"></script>
 ```
 
 ```js
 // ES module imports
-import {dw, diwu} from 'diwu.js';
-import {tf, tianfeng} from 'tianfeng.js';
-import {fw, firewyrm} from 'firewyrm.js';
-import {sh, shuihu} from 'shuihu.js';
+import {dw, diwu} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/diwu.js';
+import {tf, tianfeng} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/tianfeng.js';
+import {fw, firewyrm} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/firewyrm.js';
+import {sh, shuihu} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/shuihu.js';
+
+// All at once
+import {dw, diwu, tf, tianfeng, fw, firewyrm, sh, shuihu} from 'https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.0/main/wyvern.js';
 ```
 
 Then initialize them:
@@ -120,7 +131,7 @@ tf.init()
 ## Documentation
 Documentation is available in the [wiki](https://github.com/michael-tiger-2010/wyvernjs/wiki).
 
-## Support
+## Environment Support
 > [!NOTE]
 > Only browsers have been tested so far, but this is most likely NodeJS/ES9+ compliant. 
 
@@ -135,9 +146,6 @@ Firewyrm
 
 ShuiHu
  - Supports all ES9+ JS interpreters, but logToDOM is browser-only.
-
-## Dependencies
-No dependencies! Written in pure vanilla JS.
 
 ## Contributions
 Any suggestions, [issues](https://github.com/michael-tiger-2010/wyvernjs/issues), and [contributions](https://github.com/michael-tiger-2010/wyvernjs/pulls) are welcome! 
