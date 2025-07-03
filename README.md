@@ -8,7 +8,7 @@ Lightweight tools for intuitive coding. Extend JS without heavy frameworks. Focu
 ![Vanilla JS](https://img.shields.io/badge/Vanilla-JS-green)
 ![No Dependencies](https://img.shields.io/badge/No-Dependencies-lightgrey) 
 
-## Why wyvernjs?
+## Why this library, though?
 | Module   | Abilities                                     |
 |----------|-----------------------------------------------|
 | DiWu     | Chainable, intuitive DOM manipulation magic   |
@@ -146,3 +146,7 @@ Thanks!
 
 ## License
 This project is under the `GPL-3.0 license`. See `LICENSE` for more details.
+
+> [!NOTE]
+> Wow! Since you read all the way here, a fun fact:  
+> The three names shuihu, tianfeng, and diwu are all from the Chinese language, in pinyin. 
