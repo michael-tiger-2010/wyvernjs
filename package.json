@@ -1,0 +1,20 @@
+{
+    "name": "wyvernjs",
+    "version": "1.0.0",
+    "description": "Lightweight modular utilities for testing, DOM manipulation, logging, and general JS convenience.",
+    "main": "main/wyvern.js",
+    "exports": {
+      "./firewyvern": "./main/firewyvern.js",
+      "./shuihu": "./main/shuihu.js",
+      "./diwu": "./main/diwu.js",
+      "./tianfeng": "./main/tianfeng.js",
+      ".": "./main/wyvern.js"
+    },
+    "files": [
+      "main"
+    ],
+    "author": "Michael",
+    "license": "MIT",
+    "keywords": ["testing", "dom", "logging", "utilities", "lightweight", "wyvern", "js"]
+  }
+  

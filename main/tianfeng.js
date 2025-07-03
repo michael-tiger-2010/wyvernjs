@@ -347,11 +347,11 @@ const tf = {
                 // Touch capabilities _extended_ 
                 isTouch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
                 touchPoints: navigator.maxTouchPoints || 0,
-                
+
                 // to not flashbang dark mode users
                 isDarkMode: window.matchMedia('(prefers-color-scheme: dark)').matches,
                 isLightMode: window.matchMedia('(prefers-color-scheme: light)').matches,
-                
+
                 // finally we have networking tools
                 isOffline: !navigator.onLine,
                 connection: navigator.connection ? {
@@ -360,11 +360,11 @@ const tf = {
                     downlink: navigator.connection.downlink,
                     rtt: navigator.connection.rtt
                 } : null,
-                
+
                 // Some quick detection for mobile
                 isMobile: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
                 isDesktop: !/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
-                
+
                 // Browser testing
                 browser: {
                     isChrome: /Chrome/i.test(navigator.userAgent),
@@ -373,7 +373,7 @@ const tf = {
                     isEdge: /Edg/i.test(navigator.userAgent),
                     isIE: /Trident/i.test(navigator.userAgent)
                 },
-                
+
                 // Now for some more info collection, your os
                 os: {
                     isWindows: /Windows/i.test(navigator.userAgent),
@@ -382,7 +382,7 @@ const tf = {
                     isiOS: /iPhone|iPad|iPod/i.test(navigator.userAgent),
                     isAndroid: /Android/i.test(navigator.userAgent)
                 },
-                
+
                 // Now some screen information
                 screen: {
                     width: window.screen.width,
@@ -390,16 +390,16 @@ const tf = {
                     orientation: window.screen.orientation ? window.screen.orientation.type : 'portrait-primary',
                     pixelRatio: window.devicePixelRatio || 1
                 },
-                
+
                 // some viewport data
                 viewport: {
                     width: window.innerWidth,
                     height: window.innerHeight
                 },
-                
+
                 // battery from init
                 battery: null,
-                
+
                 // allow more stalking? Sure!
                 hasGeolocation: 'geolocation' in navigator,
             };

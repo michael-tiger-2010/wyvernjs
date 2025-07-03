@@ -208,8 +208,9 @@ const firewyrm = (function() {
     }
 
     // restore a mock
-    mock.restore = function(){
+    mock.restore = function(select = undefined){
         for(mock of mocks){
+            if(select!=undefined && mock.prop!=select) continue;
             mock.obj[mock.prop] = mock.original;
         }
         mocks = [];
