@@ -47,7 +47,7 @@ const shuihu = (function(){
     // acceptable for standard performance
     // syntax sugar is my top priority
     // speed is second
-    time = new Proxy({},{
+    let time = new Proxy({},{
         get(target, prop){
             let label = prop;
             return {
@@ -144,7 +144,7 @@ const shuihu = (function(){
         error(statement, context){_log(statement, context, 'error')},
         dire(statement, context){_log(statement, context, 'dire')},
         time,
-        outputLogs(label, serialize, lastAmount){
+        outputLogs(label = "debug", serialize = true, lastAmount = Infinity){
             // filter by label
             let logs = allLogs.filter(e=>levels[e.label]>=levels[label]).slice(-lastAmount);
 
