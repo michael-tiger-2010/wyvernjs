@@ -173,7 +173,7 @@ Thanks!
 | **Zero-Config**           | ✅ (Single file)                                                                    | ✅                                                                       | ❌ (Requires setup)                                                       | 🟡 (Light setup)                                                          | 🟡 (Light setup)                                                          |
 | **Size**                  | **~5 KB** (minified)                                                               | ~20 MB (with dependencies)                                              | ~2 MB (core)                                                              | ~1 MB                                                                    | ~100 KB                                                                   |
 
-Use FireWyvern for a easy-to-setup and lightweight quick testing tool. For people in a pinch or for small teams/projects.
+Use FireWyvern for a easy-to-setup and lightweight quick testing tool. For people in a pinch or for small teams/projects.  
 Use Jest and it's ecosystem for a comprehensive and industry-standard testing tool. For companies or extensive and feature-complete systems.
 
 ### Feature Comparison for DiWu
@@ -191,7 +191,8 @@ Use Jest and it's ecosystem for a comprehensive and industry-standard testing to
 | **Size**                  | **~4 KB**                                                                     | **~160 KB**                                                          | **~10 KB**                                                            | **~2.5 KB**                                                          | **~3 KB**                                                            |
 | **Unique Capabilities**   | - Proxy-based attribute handling<br>- `thendo()` lifecycle hooks<br>- Native animation integration | - Comprehensive OOP utilities<br>- Form serialization<br>- AJAX helpers | - Touch gestures<br>- iOS compatibility                             | - Exact jQuery method names<br>- Plugin architecture                | - Extreme minimalism<br>- Custom build options                     |
 
-DiWu is a modern browser evolution of Prototype Js, while being quite small and focusing on intuitive and native-like syntax (e.g. `el.classes.hover=true`) and animations, along with JQuery fluent-like syntax.
+DiWu is a modern browser evolution of Prototype Js, while being quite small and focusing on intuitive and native-like syntax (e.g. `el.classes.hover=true`) and animations, along with JQuery fluent-like syntax.  
+Use other DOM sugar libraries for more page/UXUI and lifecycle related work, or for a comprehensive library and community.
 
 ### Feature Comparison for TianFeng
 
@@ -212,7 +213,7 @@ DiWu is a modern browser evolution of Prototype Js, while being quite small and 
 | **Size (Minified)**       | **~3 KB**                                                                         | **~70 KB** (full)<br>**~4 KB** (per-function)                              | **~16 KB**                                                               | **~50 KB**                                                                | **~10 KB** (tree-shakeable)                                           |
 | **Modern Browser Support**| ✅ ES6 Proxies, WeakMap                                                           | ✅ IE9+                                                                     | ✅ IE9+                                                                   | ✅ ES5+                                                                   | ✅ IE10+                                                              |
 
-Use TianFeng for a wide spanse of functionality, while being quite small and focused on smoothing out the pain points of native js. 
+Use TianFeng for a wide spanse of functionality, while being quite small and focused on smoothing out the pain points of native js.  
 Use other utility libraries for more well-tested and robust tools, or for a larger ecosystem of tools.
 
 Below is a detailed comparison between **ShuiHu (sh)** and popular JavaScript logging libraries, focusing on their functionality, design philosophy, and use cases:
@@ -236,7 +237,7 @@ Below is a detailed comparison between **ShuiHu (sh)** and popular JavaScript lo
 | **Unique Features**       | - Step-based benchmarking<br>- Visual log holder<br>- Dire level for emergencies| - 20+ transports<br>- Log rotation                                         | - Extreme performance (17x faster)<br>- Async logging                  | - Tiny size<br.- Method silencer                                     | - Native browser integration                                       |
 | **Transport** | ❌ | ✅ | ✅ | ❌ |❌ |
 
-Use ShuiHu for in-browser, lightweight, and quick-and-easy tests, along with an integrated performance system. It is also marginally faster than Winston, although slower than Pino.
+Use ShuiHu for in-browser, lightweight, and quick-and-easy tests, along with an integrated performance system. It is also marginally faster than Winston, although slower than Pino.  
 Use others for maximum speed or extensive customization + transport
 
 ### Performance Comparison
@@ -264,7 +265,7 @@ Use others for maximum speed or extensive customization + transport
 | **Bundle Size**         | ✅ 10/10<br>(~25 KB combined; tree-shakeable)                               | ✅ 9/10<br>(3 KB core)                                               | ✅ 10/10<br>(4.5 KB)                                                 | 🟡 7/10<br>(Compiler output varies)                                 | ✅ 8/10<br>(6 KB)                                                  |
 | **DX Total**            | **8.3/10**                                                                  | **8.0/10**                                                           | **7.9/10**                                                           | **7.6/10**                                                           | **7.6/10**                                                           |
 
-Use WyvernJS for a unified, complete native-like workflow with zero config and for quick iteration and nice DX in a SPA.
+Use WyvernJS for a unified, complete native-like workflow with zero config and for quick iteration and nice DX in a SPA.  
 Use others for actual ecosystem and for complex multi-page webapps.
 
 ## License
