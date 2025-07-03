@@ -108,7 +108,7 @@ tf.init()
 ```
 
 ## Documentation
-Documentation is coming to the (https://github.com/michael-tiger-2010/wyvernjs/wiki)[wiki] soon, as this project is migrating from V1 to V2.
+Documentation is coming to the [wiki](https://github.com/michael-tiger-2010/wyvernjs/wiki) soon, as this project is migrating from V1 to V2.
 
 ## Support
 > [!NOTE]
@@ -130,7 +130,7 @@ ShuiHu
 No dependencies! Written in pure vanilla JS.
 
 ## Contributions
-Any suggestions, (https://github.com/michael-tiger-2010/wyvernjs/issues)[issues], and (https://github.com/michael-tiger-2010/wyvernjs/pulls)[contributions] are welcome! 
+Any suggestions, [issues](https://github.com/michael-tiger-2010/wyvernjs/issues), and [contributions](https://github.com/michael-tiger-2010/wyvernjs/pulls) are welcome! 
 This project is in its infancy. If you have something, just shoot a PR. No PR format imposed, as per the project philosophy, although for my sanity please do follow the code formatting around. 
 Thanks!
 
