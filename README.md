@@ -216,8 +216,6 @@ Use other DOM sugar libraries for more page/UXUI and lifecycle related work, or 
 Use TianFeng for a wide spanse of functionality, while being quite small and focused on smoothing out the pain points of native js.  
 Use other utility libraries for more well-tested and robust tools, or for a larger ecosystem of tools.
 
-Below is a detailed comparison between **ShuiHu (sh)** and popular JavaScript logging libraries, focusing on their functionality, design philosophy, and use cases:
-
 ### Feature Comparison Table
 
 | **Feature**               | **ShuiHu (sh)**                                                                 | **Winston**                                                                 | **Pino**                                                                 | **loglevel**                                                          | **Console API**                                                     |
