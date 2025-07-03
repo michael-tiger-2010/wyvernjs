@@ -70,7 +70,7 @@ for(let i = 0; i < 20; i++){
 sh.time.factorialFunc.end();
 ```
 > [!WARNING]
-> Some functionality defaults to polluting `prototype` and global objects (`windoow`). This can be disabled, but feature availability will be reduce.
+> Some functionality defaults to polluting `prototype` and global objects (`windoow`). This can be disabled, but feature availability will be reduced.
 
 ## Quickstart and Install
 Just download the files in `/main` include whichever features you like as either `ES modules` or just plain `<script>` tags.
