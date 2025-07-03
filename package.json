@@ -13,8 +13,8 @@
     "files": [
       "main"
     ],
-    "author": "Michael",
-    "license": "MIT",
+    "author": "Michael C",
+    "license": "GPL 3.0",
     "keywords": ["testing", "dom", "logging", "utilities", "lightweight", "wyvern", "js"]
   }
   
