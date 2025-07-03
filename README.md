@@ -128,7 +128,7 @@ DiWu
  - DOM Sugar; supported on browsers only.
 
 TianFeng
- - Supports all ES9+ JS interpreters, but the `context` needs to be set to something other than `window` if not on browser.
+ - Non-DOM features supported all ES9+ JS interpreters, but the `context` needs to be set to something other than `window` if not on browser.
 
 Firewyrm
  - Supports all ES9+ JS interpreters.
