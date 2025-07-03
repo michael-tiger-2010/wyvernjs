@@ -118,7 +118,7 @@ tf.init()
 ```
 
 ## Documentation
-Documentation is coming to the [wiki](https://github.com/michael-tiger-2010/wyvernjs/wiki) soon, as this project is migrating from V1 to V2.
+Documentation is available in the [wiki](https://github.com/michael-tiger-2010/wyvernjs/wiki).
 
 ## Support
 > [!NOTE]
