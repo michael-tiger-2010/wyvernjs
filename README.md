@@ -24,7 +24,7 @@ Programming should be developer-centric to give them the best starting place and
 ```js
 myDiv.css({backgroundColor: "lightblue"}).text("Pastel colors are the best")
 ```
- - **TianFeng** (tf, _Sky Pheonix_)
+ - **TianFeng** (tf, _Sky Pheonix_)  
    Handy utilities for everyday coding tasks. Includes JSX-like DOM tree builders, leading-trailing throttling, a better `setInterval`, device prop detection, conformation & validation, stores, and much more.
 ```js
 body.append(tree([
@@ -35,7 +35,7 @@ body.append(tree([
     ]]
 ])[0])
 ```
- - **FireWyrm** (fw)
+ - **FireWyrm** (fw)  
    Minimalist async testing and mocking framework with structured output.
 ```js
 fw.start();
@@ -58,7 +58,7 @@ fw.end()
 // restore mocks
 fw.mock.restore()
 ```
- - **ShuiHu** (sh, _Water Tiger_) 
+ - **ShuiHu** (sh, _Water Tiger_)  
    Simple, logging and performance timing with labels.
 ```js
 sh.log('a log')
