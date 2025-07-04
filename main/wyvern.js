@@ -743,7 +743,6 @@ const dw = (()=>{
 })();
 
 const diwu = dw;
-
 /* TianFeng (tf)
 * init() will populate window be default. Change to tf to populate tf with methods instead.
 * See docs for usage.
@@ -1225,7 +1224,8 @@ const tf = {
             // since i use global variables a lot
             // but for gamestate management 
             // it's GOLD
-            window.createStore = (init) => {
+            
+            context.createStore = (init) => {
                 function deepProxy(value, path=[]){
                     if(typeof value !== "object" || value === null) return value;
                     for(let i of Object.keys(value)){
@@ -1233,7 +1233,7 @@ const tf = {
                     }
                     
                     let listeners = {};
-                    return new Proxy(value, {
+                    return new Proxy(value,{
                         get(target, prop, receiver){
                             if(prop=='when'){
                                 return function(wprop){
@@ -1247,32 +1247,43 @@ const tf = {
                                     }
                                 }
                             }
-                            let t = typeof(prop)=='string' || Number(prop);
-                            if(!prop.includes('.') && !isNaN(t)){
-                                //is array index-like
-                                if(Array.isArray(target) && t < 0){
-                                    return target[target.length + t];
-                                }
-                                return target[t];
+                            // Handle Symbol.iterator for arrays
+                            if (Array.isArray(target) && prop === Symbol.iterator) {
+                                return target[Symbol.iterator].bind(target);
                             }
+                            
+                            // Handle array methods
+                            if (Array.isArray(target) && typeof prop !== 'symbol') {
+                                const index = Number(prop);
+                                if (!isNaN(index)) {
+                                    return index >= -target.length && index < target.length 
+                                        ? target[index]
+                                        : undefined;
+                                }
+                            }
+                            
+                            // Default behavior
                             return Reflect.get(target, prop, receiver);
                         },
                         set(target, prop, val, receiver){
+                            
                             if(typeof val === 'object' && val !== null){
                                 val = deepProxy(val, path.concat([prop]));
                             }
-                            if(Object.keys(listeners).includes('*')){
-                                listeners['*'].forEach(e=>{
-                                    e(prop, val, target);
-                                })
-                            }
-                            if(Object.keys(listeners).includes(prop)){
-                                listeners[prop].forEach(e=>{
-                                    e(val, target);
-                                })
-                            }
-                            let t = typeof(prop)=='string' || Number(prop);
-                            if(!prop.includes('.') && !isNaN(t)){
+                            setTimeout(()=>{
+                                if(Object.keys(listeners).includes('*')){
+                                    listeners['*'].forEach(e=>{
+                                        e(prop, val, target);
+                                    })
+                                }
+                                if(Object.keys(listeners).includes(prop)){
+                                    listeners[prop].forEach(e=>{
+                                        e(val, target);
+                                    })
+                                }
+                            }, 0, listeners)
+                            let t = typeof(prop)==='string'?Number(prop):prop;
+                            if(typeof prop === 'string' && !prop.includes('.') && !isNaN(t)){
                                 if(Array.isArray(target) && t < 0){
                                     target[target.length + t] = val;
                                     return true;
@@ -1283,8 +1294,8 @@ const tf = {
                             return Reflect.set(target, prop, val, receiver);
                         },
                         has(target, prop) {
-                            let t = typeof(prop)=='string' || Number(prop);
-                            if (!prop.includes('.') && !isNaN(t)) {
+                            let t = typeof(prop)==='string'?Number(prop):prop;
+                            if (typeof prop === 'string' && !prop.includes('.') && !isNaN(t)) {
                                 
                                 if (Array.isArray(target)) {
                                     return t >= -target.length && t < target.length;
@@ -1299,6 +1310,7 @@ const tf = {
                 }
                 return deepProxy(init);
             }
+
         }
 
         if(options.async || options.async==undefined){

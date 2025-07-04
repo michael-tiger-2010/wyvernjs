@@ -1,5 +1,5 @@
 <header>My Website <button onclick="App.state.route=[]">Home</button> <button onclick="App.state.route=['products']">Products</button></header>
-<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@latest/main/wyvern.js?a=1"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.7/main/wyvern.js?a=4"></script>
 <style>
     #views{
         display:flex;
@@ -26,12 +26,10 @@ tf.init();
 App = {
     processRoute(r){
         if(!r) return [];
-        // simple and easy hash routing
-        // since I don't want to mess with server configs
         r = r.slice(2).split('/');
         let build = [];
         let params = [];
-        for(let i of r){
+        for(let i of Object.values(r)){
             if(i.includes(':')){
                 let p = i.split(':');
                 App.state.viewParams[p[0]] = safeParse(p.slice(1).join(':'));
@@ -42,7 +40,7 @@ App = {
         return build;
     },
     routeToHash(){
-        return `#/${App.state.route.join('/')}/${Object.entries(App.state.viewParams).map(e=>`${e[0]}:${e[1]}`).join('/')}`
+        return `#${[''].concat(App.state.route).join('/')}${[""].concat(Object.entries(App.state.viewParams).map(e=>`${e[0]}:${e[1]}`)).join('/')}`
     },
     state: createStore({route: [], viewParams: {}}), //if empty, that's fine
     views: $('views'),
