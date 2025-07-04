@@ -1,5 +1,5 @@
-<header>My Website <button onclick="App.state.route=[]">Home</button> <button onclick="App.state.route=['products']">Products</button></header>
-<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.7/main/wyvern.js?a=4"></script>
+<header>My Website <button onclick="App.goTo('')">Home</button> <button onclick="App.goTo('/products')">Products</button> <button onclick="App.goBack();">BACK</button></button></header>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.8/main/wyvern.js"></script>
 <style>
     #views{
         display:flex;
@@ -10,11 +10,14 @@
         gap:10px;
     }
     .product{
-        background-color:#aaa;
+        background-color:#ddd;
         cursor:pointer;
-        width:200px;
-        height:150px;
+        width:400px;
+        height:250px;
         display: inline-block;
+    }
+    .product:hover{
+        background-color:#aaa
     }
 </style>
 
@@ -23,14 +26,115 @@
 dw.init();
 tf.init();
 
+
+            window.createStore = (init) => {
+                let listeners = {};
+                function deepProxy(value, path=[]){
+                    if(typeof value !== "object" || value === null) return value;
+                    for(let i of Object.keys(value)){
+                        value[i] = deepProxy(value[i], path.concat([i]));
+                    }
+                    
+                    return new Proxy(value,{
+                        get(target, prop, receiver){
+                            if(prop=='when'){
+                                return function(wprop='*'){
+                                    return{
+                                        tell(listener){
+                                            wprop = `${path.concat(['']).join('.')}${wprop}`;
+                                            if(!Object.keys(listeners).includes(wprop)){
+                                                listeners[wprop] = [];
+                                            }
+                                            listeners[wprop].push(listener);
+                                        }
+                                    }
+                                }
+                            }
+                            // Handle Symbol.iterator for arrays
+                            if (Array.isArray(target) && prop === Symbol.iterator) {
+                                return target[Symbol.iterator].bind(target);
+                            }
+                            
+                            // Handle array methods
+                            if (Array.isArray(target) && typeof prop !== 'symbol') {
+                                const index = Number(prop);
+                                if (!isNaN(index)) {
+                                    return index >= -target.length && index < target.length 
+                                        ? target[index]
+                                        : undefined;
+                                }
+                            }
+                            
+                            // Default behavior
+                            return Reflect.get(target, prop, receiver);
+                        },
+                        set(target, prop, val, receiver){
+                            if(typeof val === 'object' && val !== null){
+                                val = deepProxy(val, path.concat([prop]));
+                            }
+                            setTimeout(()=>{
+                                let full = path.concat([prop]);
+                                console.log('full', full);
+                                console.log('listeners',listeners);
+                                for(let i = 0; i < full.length; i++){
+                                    let wildCard = full.slice(0,i).concat(['*']).join('.');
+                                    if(Object.keys(listeners).includes(wildCard)){
+                                        listeners[wildCard].forEach(e=>{
+                                            e(prop, val, target);
+                                        })
+                                    }
+                                    let propAdr = full.slice(0,i+1).join('.');
+                                    if(Object.keys(listeners).includes(propAdr)){
+                                        listeners[propAdr].forEach(e=>{
+                                            e(val, target);
+                                        })
+                                    }
+                                    console.log('wildCard + propAdr', wildCard, propAdr)
+                                }
+                            }, 0)
+                            let t = typeof(prop)==='string'?Number(prop):prop;
+                            if(typeof prop === 'string' && !prop.includes('.') && !isNaN(t)){
+                                if(Array.isArray(target) && t < 0){
+                                    target[target.length + t] = val;
+                                    return true;
+                                }
+                                target[t] = val;
+                                return true;
+                            }
+                            return Reflect.set(target, prop, val, receiver);
+                        },
+                        has(target, prop) {
+                            let t = typeof(prop)==='string'?Number(prop):prop;
+                            if (typeof prop === 'string' && !prop.includes('.') && !isNaN(t)) {
+                                
+                                if (Array.isArray(target)) {
+                                    return t >= -target.length && t < target.length;
+                                }
+                                
+                                return t in target;
+                            }
+                            
+                            return Reflect.has(target, prop);
+                        }
+                    })
+                }
+                let proxiedStore = deepProxy(init);
+
+                return proxiedStore;
+            }
+
+
+
 App = {
     processRoute(r){
         if(!r) return [];
-        r = r.slice(2).split('/');
+        App.state.viewParams = {};
+        r = r.slice(2).split('/').filter(e=>e);
         let build = [];
         let params = [];
         for(let i of Object.values(r)){
             if(i.includes(':')){
+                console.log(i)
                 let p = i.split(':');
                 App.state.viewParams[p[0]] = safeParse(p.slice(1).join(':'));
             }else{
@@ -41,6 +145,16 @@ App = {
     },
     routeToHash(){
         return `#${[''].concat(App.state.route).join('/')}${[""].concat(Object.entries(App.state.viewParams).map(e=>`${e[0]}:${e[1]}`)).join('/')}`
+    },
+    goBack(){
+        if(Object.keys(App.state.viewParams).length != 0){
+            App.state.viewParams = {};
+            return;
+        }
+        App.state.route = App.state.route.slice(0,-1);
+    },
+    goTo(url){
+        App.state.route = processRoute(url);
     },
     state: createStore({route: [], viewParams: {}}), //if empty, that's fine
     views: $('views'),
@@ -73,17 +187,42 @@ App = {
         },
         products: {
             init(){
+                sh.debug('products view reached')
                 views.empty();
                 let products = App.mockFetch('/api/products');
+                if(App.state.viewParams.id){
+                    let id = App.state.viewParams.id;
+                    if(id<0 || id>=products.length){
+                        App.state.viewParams = {};
+                        App.state.route = ["404"];
+                        return;
+                    }
+                }
                 for(let i in products){
-                    views.append(tree([
-                        'div', {"class": "product"}, [
+                    if(App.state.viewParams.id && App.state.viewParams.id!=i) continue;
+                    let el = tree([
+                        'div', {"class": "product", "data-num": i}, [
                             ['h2', {}, [products[i].name]],
                             ['i',{},['$'+products[i].price]],['br'],
                             ['p',{},[products[i].desc]]
                         ]
-                    ])[0])
+                    ])[0]
+                    el.once('click',(e)=>{
+
+                        App.state.viewParams.id = e.currentTarget.dataset.num;
+                        console.log(App.state.viewParams.id)
+                    })
+                    views.append(el)
                 }
+            }
+        },
+        "404": {
+            init(){
+                views.empty();
+                tree([
+                    ['h1', {}, ["404 - Error"]],
+                    ['p',{}, ["Try going back home."]]
+                ],views)
             }
         }
     },
@@ -98,16 +237,23 @@ App = {
         let page = App.views;
         for(var i of App.state.route){
             page = page[i];
+            if(!page) break;
         }
-        page.init();
+        if(!page){
+            App.views["404"].init();
+        }else{
+            page.init();
+        }
     },
 
     init(){
         App.state.route = App.processRoute(location.hash);
         App.state.when('route').tell(App.onRouteChange);
+        App.state.when('viewParams').tell(App.onRouteChange);
         if(App.state.route.length==0){
-            location.hash='#/';
+            location.hash='';
         }
+        App.onRouteChange();
     },
 
     onRouteChange(){

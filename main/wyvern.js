@@ -743,6 +743,7 @@ const dw = (()=>{
 })();
 
 const diwu = dw;
+
 /* TianFeng (tf)
 * init() will populate window be default. Change to tf to populate tf with methods instead.
 * See docs for usage.
@@ -1225,20 +1226,22 @@ const tf = {
             // but for gamestate management 
             // it's GOLD
             
+
             context.createStore = (init) => {
+                let listeners = {};
                 function deepProxy(value, path=[]){
                     if(typeof value !== "object" || value === null) return value;
                     for(let i of Object.keys(value)){
                         value[i] = deepProxy(value[i], path.concat([i]));
                     }
                     
-                    let listeners = {};
                     return new Proxy(value,{
                         get(target, prop, receiver){
                             if(prop=='when'){
-                                return function(wprop){
+                                return function(wprop='*'){
                                     return{
                                         tell(listener){
+                                            wprop = `${path.concat(['']).join('.')}${wprop}`;
                                             if(!Object.keys(listeners).includes(wprop)){
                                                 listeners[wprop] = [];
                                             }
@@ -1266,22 +1269,26 @@ const tf = {
                             return Reflect.get(target, prop, receiver);
                         },
                         set(target, prop, val, receiver){
-                            
                             if(typeof val === 'object' && val !== null){
                                 val = deepProxy(val, path.concat([prop]));
                             }
                             setTimeout(()=>{
-                                if(Object.keys(listeners).includes('*')){
-                                    listeners['*'].forEach(e=>{
-                                        e(prop, val, target);
-                                    })
+                                let full = path.concat([prop]);
+                                for(let i = 0; i < full.length; i++){
+                                    let wildCard = full.slice(0,i).concat(['*']).join('.');
+                                    if(Object.keys(listeners).includes(wildCard)){
+                                        listeners[wildCard].forEach(e=>{
+                                            e(prop, val, target);
+                                        })
+                                    }
+                                    let propAdr = full.slice(0,i+1).join('.');
+                                    if(Object.keys(listeners).includes(propAdr)){
+                                        listeners[propAdr].forEach(e=>{
+                                            e(val, target);
+                                        })
+                                    }
                                 }
-                                if(Object.keys(listeners).includes(prop)){
-                                    listeners[prop].forEach(e=>{
-                                        e(val, target);
-                                    })
-                                }
-                            }, 0, listeners)
+                            }, 0)
                             let t = typeof(prop)==='string'?Number(prop):prop;
                             if(typeof prop === 'string' && !prop.includes('.') && !isNaN(t)){
                                 if(Array.isArray(target) && t < 0){
@@ -1308,8 +1315,11 @@ const tf = {
                         }
                     })
                 }
-                return deepProxy(init);
+                let proxiedStore = deepProxy(init);
+
+                return proxiedStore;
             }
+
 
         }
 
