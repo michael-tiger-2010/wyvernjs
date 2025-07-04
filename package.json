@@ -1,6 +1,6 @@
 {
     "name": "@mchen_dragon/wyvernjs",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "Lightweight modular utilities for testing, DOM manipulation, logging, and general JS convenience.",
     "main": "main/wyvern.js",
     "exports": {
