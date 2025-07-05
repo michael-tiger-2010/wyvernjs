@@ -648,6 +648,153 @@ const tf = {
                 );
             };
         }
+
+        if(options.route || options.route==undefined){
+            context.route = {
+                // hook into changes
+                // programmically set routes
+                // get data
+                registeredRoutes: {},
+                notFoundPage: '404',
+                guardFunc: undefined,
+                _initialized: false,
+                _lastUrl: '/',
+                init(startUrl = location.hash.slice(1)){
+                    if(this._initialized) return;
+                    this._initialized = true;
+                    this._lastUrl = startUrl;
+                    this.go(startUrl);
+                    window.addEventListener('hashchange', (e) => {
+                        this._lastUrl = new URL(e.oldURL).hash.slice(1);
+                        this.checkTrigger(this.getLocation());
+                    });
+
+                    if(!this.getLocation()) this.setLocation(startUrl);
+                    this.checkTrigger(this.getLocation());
+                },
+                testUrl(tested, against){
+                    let s1 = this.urlToArr(this.normalizeUrl(tested));
+                    let s2 = this.urlToArr(this.normalizeUrl(against));
+
+                    let match = true;
+                    let params = {};
+                    for(var i in s1){
+                        if(s1[i].startsWith(':')){
+                            params[s1[i].slice(1)] = s2[i];
+                        }else if(s1[i] === '*'){
+                            params['_wildcard'] = s2.slice(i).join('/');
+                            return params; // Capture remaining segments
+                        }else if(s2[i] === undefined || s1[i].toLowerCase()!==s2[i].toLowerCase()){
+                            match = false;
+                            break;
+                        }
+                    }
+                    if(!match) return false;
+                    return params;
+                
+                },
+                checkTrigger(url){
+                    let canceled = false;
+                    let shortcut = undefined;
+                    if(this.guardFunc){
+                        this.guardFunc(url, this._lastUrl, ()=>{
+                            canceled=true
+                        }, (to)=>{
+                            shortcut = to;
+                        })
+                        if(canceled){
+                            this.back();
+                            return false;
+                        }
+                        if(shortcut){
+                            this.go(shortcut);
+                            return false;
+                        }
+                    }
+                    for(let i of Object.keys(this.registeredRoutes)){
+                        let res = this.testUrl(i, url);
+                        if(res){
+                            this.registeredRoutes[i].forEach(e=>{
+                                e(res);
+                            })
+                            window.dispatchEvent(new CustomEvent('routechange', { 
+                                detail: { from: this._lastUrl, to: url}
+                            }));
+                            return true;
+                        }
+                    }
+                    if(url !== this.normalizeUrl('/' + this.notFoundPage)) {
+                        window.dispatchEvent(new CustomEvent('routererror', {
+                            detail: { message: 'Route not found', url }
+                        }));
+                        this.go('/' + this.notFoundPage);
+                    }
+                },
+                normalizeUrl(url){
+                    return '/'+url.split('/').filter(e=>e).join('/');
+                },
+                getLocation(){
+                    return location.hash.slice(1);
+                },
+                setLocation(url){
+                    location.hash = '#'+url;
+                },
+                urlToArr(url){ //expects normalized
+                    return url.split('/').slice(1);
+                },
+
+
+
+                when(url, callback){
+                    if(!this.registeredRoutes[url]){
+                        this.registeredRoutes[url] = [];
+                    }
+                    this.registeredRoutes[url].push(callback);
+                },
+                remove(url, callback='*') {
+                    if(this.registeredRoutes[url]) {
+                        this.registeredRoutes[url] = this.registeredRoutes[url]
+                            .filter(cb => callback=='*' || cb !== callback);
+                    }
+                },
+                guard(callback){
+                    this.guardFunc = callback; // only one allowed, to prevent code mangaling
+                },
+                go(url){
+                    let nUrl = this.urlToArr(this.normalizeUrl(url));
+                    let base;
+                    if(url.startsWith('/')){
+                        base = [];
+                    }else{
+                        base = this.urlToArr(this.getLocation());
+                    }
+                    // resolve downwards trasversal
+                    nUrl.forEach(e=>{
+                        if(e==='..'){
+                            if(base.length===0){
+                                throw new Error('[router.go] The url tried to leave root through ..')
+                            }
+                            base.splice(-1,1);
+                            return;
+                        }
+                        if(e!=='.' && e!==''){
+                            base.push(e);
+                        }
+                    })
+                    
+                    base = '/'+base.join('/');
+
+                    //this.checkTrigger(base);
+                    this.setLocation(base);
+                },
+                back(){
+                    history.back();
+                },
+                forward(){
+                    history.forward();
+                }
+            }
+        }
     }
 }
 

@@ -1,269 +1,333 @@
-<header>My Website <button onclick="App.goTo('')">Home</button> <button onclick="App.goTo('/products')">Products</button> <button onclick="App.goBack();">BACK</button></button></header>
-<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.8/main/wyvern.js"></script>
-<style>
-    #views{
-        display:flex;
-        flex-wrap: wrap;
-        justify-content: space-around;
-        align-items: center;
-        align-content: space-around;
-        gap:10px;
-    }
-    .product{
-        background-color:#ddd;
-        cursor:pointer;
-        width:400px;
-        height:250px;
-        display: inline-block;
-    }
-    .product:hover{
-        background-color:#aaa
-    }
-</style>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Router Test</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        nav { margin-bottom: 20px; }
+        button { margin: 5px; padding: 5px 10px; }
+        .content { border: 1px solid #ccc; padding: 20px; margin: 20px 0; min-height: 100px; }
+        .active { font-weight: bold; color: #007bff; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>Router Test</h1>
+    
+    <nav>
+        <!-- Test basic navigation -->
+        <a href="#/">Home</a> | 
+        <a href="#/about">About</a> | 
+        <a href="#/users/1">User 1</a> | 
+        <a href="#/users/2/profile">User 2 Profile</a> | 
+        <a href="#/wildcard/test/123">Wildcard Test</a> | 
+        <a href="#/invalid">Invalid Route</a>
+    </nav>
+    
+    <!-- Test programmatic navigation -->
+    <div>
+        <button onclick="router.go('/users/3')">Go to User 3</button>
+        <button onclick="router.go('../')">Go Up (Relative)</button>
+        <button onclick="router.back()">Back</button>
+        <button onclick="router.forward()">Forward</button>
+        <button onclick="toggleLogin()">Toggle Login</button>
+    </div>
+    
+    <!-- Route content will appear here -->
+    <div id="content" class="content"></div>
+    
+    <div id="status">Status: Not authenticated</div>
 
-<div id="views"></div>
-<script>
-dw.init();
-tf.init();
+    <script>
+        // ======================================================================
+        // PASTE YOUR ROUTER IMPLEMENTATION HERE (replace context with window)
+        // ======================================================================
+            window.route = {
+                // hook into changes
+                // programmically set routes
+                // get data
+                registeredRoutes: {},
+                notFoundPage: '404',
+                guardFunc: undefined,
+                _initialized: false,
+                _lastUrl: '/',
+                init(startUrl = location.hash.slice(1)){
+                    if(this._initialized) return;
+                    this._initialized = true;
+                    this._lastUrl = startUrl;
+                    this.go(startUrl);
+                    window.addEventListener('hashchange', (e) => {
+                        this._lastUrl = new URL(e.oldURL).hash.slice(1);
+                        this.checkTrigger(this.getLocation());
+                    });
 
+                    if(!this.getLocation()) this.setLocation(startUrl);
+                    this.checkTrigger(this.getLocation());
+                },
+                testUrl(tested, against){
+                    let s1 = this.urlToArr(this.normalizeUrl(tested));
+                    let s2 = this.urlToArr(this.normalizeUrl(against));
 
-            window.createStore = (init) => {
-                let listeners = {};
-                function deepProxy(value, path=[]){
-                    if(typeof value !== "object" || value === null) return value;
-                    for(let i of Object.keys(value)){
-                        value[i] = deepProxy(value[i], path.concat([i]));
+                    let match = true;
+                    let params = {};
+                    for(var i in s1){
+                        if(s1[i].startsWith(':')){
+                            params[s1[i].slice(1)] = s2[i];
+                        }else if(s1[i] === '*'){
+                            params['_wildcard'] = s2.slice(i).join('/');
+                            return params; // Capture remaining segments
+                        }else if(s2[i] === undefined || s1[i].toLowerCase()!==s2[i].toLowerCase()){
+                            match = false;
+                            break;
+                        }
                     }
-                    
-                    return new Proxy(value,{
-                        get(target, prop, receiver){
-                            if(prop=='when'){
-                                return function(wprop='*'){
-                                    return{
-                                        tell(listener){
-                                            wprop = `${path.concat(['']).join('.')}${wprop}`;
-                                            if(!Object.keys(listeners).includes(wprop)){
-                                                listeners[wprop] = [];
-                                            }
-                                            listeners[wprop].push(listener);
-                                        }
-                                    }
-                                }
+                    if(!match) return false;
+                    return params;
+                
+                },
+                checkTrigger(url){
+                    let canceled = false;
+                    let shortcut = undefined;
+                    if(this.guardFunc){
+                        this.guardFunc(url, this._lastUrl, ()=>{
+                            canceled=true
+                        }, (to)=>{
+                            shortcut = to;
+                        })
+                        if(canceled){
+                            this.back();
+                            return false;
+                        }
+                        if(shortcut){
+                            this.go(shortcut);
+                            return false;
+                        }
+                    }
+                    for(let i of Object.keys(this.registeredRoutes)){
+                        let res = this.testUrl(i, url);
+                        if(res){
+                            this.registeredRoutes[i].forEach(e=>{
+                                e(res);
+                            })
+                            window.dispatchEvent(new CustomEvent('routechange', { 
+                                detail: { from: this._lastUrl, to: url}
+                            }));
+                            return true;
+                        }
+                    }
+                    if(url !== this.normalizeUrl('/' + this.notFoundPage)) {
+                        window.dispatchEvent(new CustomEvent('routererror', {
+                            detail: { message: 'Route not found', url }
+                        }));
+                        this.go('/' + this.notFoundPage);
+                    }
+                },
+                normalizeUrl(url){
+                    return '/'+url.split('/').filter(e=>e).join('/');
+                },
+                getLocation(){
+                    return location.hash.slice(1);
+                },
+                setLocation(url){
+                    location.hash = '#'+url;
+                },
+                urlToArr(url){ //expects normalized
+                    return url.split('/').slice(1);
+                },
+
+
+
+                when(url, callback){
+                    if(!this.registeredRoutes[url]){
+                        this.registeredRoutes[url] = [];
+                    }
+                    this.registeredRoutes[url].push(callback);
+                },
+                remove(url, callback='*') {
+                    if(this.registeredRoutes[url]) {
+                        this.registeredRoutes[url] = this.registeredRoutes[url]
+                            .filter(cb => callback=='*' || cb !== callback);
+                    }
+                },
+                guard(callback){
+                    this.guardFunc = callback; // only one allowed, to prevent code mangaling
+                },
+                go(url){
+                    let nUrl = this.urlToArr(this.normalizeUrl(url));
+                    let base;
+                    if(url.startsWith('/')){
+                        base = [];
+                    }else{
+                        base = this.urlToArr(this.getLocation());
+                    }
+                    // resolve downwards trasversal
+                    nUrl.forEach(e=>{
+                        if(e==='..'){
+                            if(base.length===0){
+                                throw new Error('[router.go] The url tried to leave root through ..')
                             }
-                            // Handle Symbol.iterator for arrays
-                            if (Array.isArray(target) && prop === Symbol.iterator) {
-                                return target[Symbol.iterator].bind(target);
-                            }
-                            
-                            // Handle array methods
-                            if (Array.isArray(target) && typeof prop !== 'symbol') {
-                                const index = Number(prop);
-                                if (!isNaN(index)) {
-                                    return index >= -target.length && index < target.length 
-                                        ? target[index]
-                                        : undefined;
-                                }
-                            }
-                            
-                            // Default behavior
-                            return Reflect.get(target, prop, receiver);
-                        },
-                        set(target, prop, val, receiver){
-                            if(typeof val === 'object' && val !== null){
-                                val = deepProxy(val, path.concat([prop]));
-                            }
-                            setTimeout(()=>{
-                                let full = path.concat([prop]);
-                                console.log('full', full);
-                                console.log('listeners',listeners);
-                                for(let i = 0; i < full.length; i++){
-                                    let wildCard = full.slice(0,i).concat(['*']).join('.');
-                                    if(Object.keys(listeners).includes(wildCard)){
-                                        listeners[wildCard].forEach(e=>{
-                                            e(prop, val, target);
-                                        })
-                                    }
-                                    let propAdr = full.slice(0,i+1).join('.');
-                                    if(Object.keys(listeners).includes(propAdr)){
-                                        listeners[propAdr].forEach(e=>{
-                                            e(val, target);
-                                        })
-                                    }
-                                    console.log('wildCard + propAdr', wildCard, propAdr)
-                                }
-                            }, 0)
-                            let t = typeof(prop)==='string'?Number(prop):prop;
-                            if(typeof prop === 'string' && !prop.includes('.') && !isNaN(t)){
-                                if(Array.isArray(target) && t < 0){
-                                    target[target.length + t] = val;
-                                    return true;
-                                }
-                                target[t] = val;
-                                return true;
-                            }
-                            return Reflect.set(target, prop, val, receiver);
-                        },
-                        has(target, prop) {
-                            let t = typeof(prop)==='string'?Number(prop):prop;
-                            if (typeof prop === 'string' && !prop.includes('.') && !isNaN(t)) {
-                                
-                                if (Array.isArray(target)) {
-                                    return t >= -target.length && t < target.length;
-                                }
-                                
-                                return t in target;
-                            }
-                            
-                            return Reflect.has(target, prop);
+                            base.splice(-1,1);
+                            return;
+                        }
+                        if(e!=='.' && e!==''){
+                            base.push(e);
                         }
                     })
-                }
-                let proxiedStore = deepProxy(init);
+                    
+                    base = '/'+base.join('/');
 
-                return proxiedStore;
-            }
-
-
-
-App = {
-    processRoute(r){
-        if(!r) return [];
-        App.state.viewParams = {};
-        r = r.slice(2).split('/').filter(e=>e);
-        let build = [];
-        let params = [];
-        for(let i of Object.values(r)){
-            if(i.includes(':')){
-                console.log(i)
-                let p = i.split(':');
-                App.state.viewParams[p[0]] = safeParse(p.slice(1).join(':'));
-            }else{
-                build.push(i);
-            }
-        }
-        return build;
-    },
-    routeToHash(){
-        return `#${[''].concat(App.state.route).join('/')}${[""].concat(Object.entries(App.state.viewParams).map(e=>`${e[0]}:${e[1]}`)).join('/')}`
-    },
-    goBack(){
-        if(Object.keys(App.state.viewParams).length != 0){
-            App.state.viewParams = {};
-            return;
-        }
-        App.state.route = App.state.route.slice(0,-1);
-    },
-    goTo(url){
-        App.state.route = processRoute(url);
-    },
-    state: createStore({route: [], viewParams: {}}), //if empty, that's fine
-    views: $('views'),
-    mockFetch: (url)=>{
-        if(url=='/api/products'){
-            return [
-                {
-                    "name": "FireWyrm Emblem",
-                    "price": 10,
-                    "desc": "Solid, full metal disk with vermillion red undercoat and a black, traced MathDragon wyrm inset."
-                },{
-                    "name": "Tiger's Claw Pendant",
-                    "price": 15,
-                    "desc": "Hand-carved amber pendant shaped like a tiger's claw, strung on a black leather cord. Symbolizes strength and courage."
-                },{
-                    "name": "Serpent's Scale Ring",
-                    "price": 12,
-                    "desc": "Sterling silver ring with an engraved pattern mimicking snake scales. Adjustable band with a subtle emerald-green enamel wash."
+                    //this.checkTrigger(base);
+                    this.setLocation(base);
                 },
-            ]
-        }
-    },
-
-    views: {
-        home: {
-            init(){
-                views.empty();
-                tree([['h1',{},["Hello this is the home. Have a nice day. Please see our products."]]],views)
-            }
-        },
-        products: {
-            init(){
-                sh.debug('products view reached')
-                views.empty();
-                let products = App.mockFetch('/api/products');
-                if(App.state.viewParams.id){
-                    let id = App.state.viewParams.id;
-                    if(id<0 || id>=products.length){
-                        App.state.viewParams = {};
-                        App.state.route = ["404"];
-                        return;
-                    }
-                }
-                for(let i in products){
-                    if(App.state.viewParams.id && App.state.viewParams.id!=i) continue;
-                    let el = tree([
-                        'div', {"class": "product", "data-num": i}, [
-                            ['h2', {}, [products[i].name]],
-                            ['i',{},['$'+products[i].price]],['br'],
-                            ['p',{},[products[i].desc]]
-                        ]
-                    ])[0]
-                    el.once('click',(e)=>{
-
-                        App.state.viewParams.id = e.currentTarget.dataset.num;
-                        console.log(App.state.viewParams.id)
-                    })
-                    views.append(el)
+                back(){
+                    history.back();
+                },
+                forward(){
+                    history.forward();
                 }
             }
-        },
-        "404": {
-            init(){
-                views.empty();
-                tree([
-                    ['h1', {}, ["404 - Error"]],
-                    ['p',{}, ["Try going back home."]]
-                ],views)
+        const router = window.route;
+        
+        // Initialize the router
+        router.init('/');
+        
+        // ======================================================================
+        // TEST ROUTES AND GUARDS
+        // ======================================================================
+        let isAuthenticated = false;
+        
+        // Authentication guard
+        router.guard((to, from, cancel, redirect) => {
+            console.log(`Guard: from "${from}" to "${to}"`);
+            
+            // Block access to protected routes
+            if (to.startsWith('/admin') && !isAuthenticated) {
+                cancel();
+                document.getElementById('status').textContent = 
+                    'Error: Unauthorized access blocked!';
+                document.getElementById('status').className = 'error';
+                return;
+            }
+            
+            // Redirect to login for dashboard
+            if (to === '/dashboard' && !isAuthenticated) {
+                redirect('/login');
+                return;
+            }
+            
+            // Log navigation
+            document.getElementById('status').textContent = 
+                `Navigating to: ${to}`;
+            document.getElementById('status').className = '';
+        });
+        
+        // Route handlers
+        router.when('/', () => {
+            document.getElementById('content').innerHTML = `
+                <h2>Home Page</h2>
+                <p>Welcome to the home page!</p>
+                <button onclick="router.go('/admin/settings')">
+                    Try Admin Area (protected)
+                </button>
+            `;
+            highlightActiveLink('/');
+        });
+        
+        router.when('/about', () => {
+            document.getElementById('content').innerHTML = `
+                <h2>About Us</h2>
+                <p>This is a router test page.</p>
+            `;
+            highlightActiveLink('/about');
+        });
+        
+        router.when('/users/:id', (params) => {
+            document.getElementById('content').innerHTML = `
+                <h2>User Profile</h2>
+                <p>Showing user ID: ${params.id}</p>
+                <button onclick="router.go('/users/${params.id}/profile')">
+                    View Profile
+                </button>
+            `;
+            highlightActiveLink('/users/' + params.id);
+        });
+        
+        router.when('/users/:id/profile', (params) => {
+            document.getElementById('content').innerHTML = `
+                <h2>User Profile</h2>
+                <p>Detailed profile for user: ${params.id}</p>
+                <p><button onclick="router.go('../')">Back to user</button></p>
+            `;
+            highlightActiveLink('/users/' + params.id + '/profile');
+        });
+        
+        router.when('/wildcard/*', (params) => {
+            document.getElementById('content').innerHTML = `
+                <h2>Wildcard Route</h2>
+                <p>Captured value: ${params._wildcard}</p>
+            `;
+            highlightActiveLink('/wildcard');
+        });
+        
+        router.when('/login', () => {
+            document.getElementById('content').innerHTML = `
+                <h2>Login Page</h2>
+                <p>You were redirected here because authentication is required.</p>
+                <button onclick="toggleLogin()">Login Now</button>
+            `;
+        });
+        
+        router.when('/dashboard', () => {
+            document.getElementById('content').innerHTML = `
+                <h2>Dashboard</h2>
+                <p>Welcome to your dashboard!</p>
+            `;
+        });
+        
+        router.when('/admin/settings', () => {
+            document.getElementById('content').innerHTML = `
+                <h2>Admin Settings</h2>
+                <p>Super secret admin panel</p>
+            `;
+        });
+        
+        router.when('/404', () => {
+            document.getElementById('content').innerHTML = `
+                <h2 class="error">404 - Page Not Found</h2>
+                <p>The requested URL was not found.</p>
+                <button onclick="router.go('/')">Go Home</button>
+            `;
+        });
+        
+        // ======================================================================
+        // HELPER FUNCTIONS
+        // ======================================================================
+        function highlightActiveLink(url) {
+            document.querySelectorAll('nav a').forEach(link => {
+                const linkUrl = link.getAttribute('href').substring(1);
+                link.className = router.testUrl(linkUrl, router.getLocation()) ? 'active' : '';
+            });
+        }
+        
+        function toggleLogin() {
+            isAuthenticated = !isAuthenticated;
+            document.getElementById('status').textContent = 
+                `Status: ${isAuthenticated ? 'Authenticated' : 'Not authenticated'}`;
+            document.getElementById('status').className = isAuthenticated ? '' : 'error';
+            
+            if (isAuthenticated) {
+                router.go('/dashboard');
             }
         }
-    },
-
-    renderView(){
-        if(App.state.route.length==0){
-            App.views["home"].init();
-            return;
-        }
-
-        // if it's a nested page then go find it
-        let page = App.views;
-        for(var i of App.state.route){
-            page = page[i];
-            if(!page) break;
-        }
-        if(!page){
-            App.views["404"].init();
-        }else{
-            page.init();
-        }
-    },
-
-    init(){
-        App.state.route = App.processRoute(location.hash);
-        App.state.when('route').tell(App.onRouteChange);
-        App.state.when('viewParams').tell(App.onRouteChange);
-        if(App.state.route.length==0){
-            location.hash='';
-        }
-        App.onRouteChange();
-    },
-
-    onRouteChange(){
-        sh.debug('routechange')
-        location.hash = App.routeToHash();
-        App.renderView();
-    }
-
-}
-
-App.init();
-
-</script>
+        
+        // Listen to navigation events
+        window.addEventListener('routechange', (e) => {
+            console.log('Route changed:', e.detail);
+        });
+        
+        window.addEventListener('routererror', (e) => {
+            console.error('Router error:', e.detail);
+        });
+    </script>
+</body>
+</html>
