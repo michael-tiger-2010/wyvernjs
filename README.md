@@ -35,7 +35,7 @@ Programming should be developer-centric, giving developers the best foundation a
 myDiv.css({backgroundColor: "lightblue"}).text("Pastel colors are the best")
 ```
  - **TianFeng** (tf, _Sky Phoenix_)  
-   Handy utilities for everyday coding tasks. Includes JSX-like DOM tree builders, leading-trailing throttling, a better `setInterval`, device prop detection, conformation & validation, stores, and much more.
+   Handy utilities for everyday coding tasks. Includes JSX-like DOM tree builders, a full hash-based routing component, leading-trailing throttling, a better `setInterval`, device prop detection, conformation & validation, stores, and much more.
 ```js
 // using tree to build DOM
 body.append(tree([
