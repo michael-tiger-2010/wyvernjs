@@ -351,7 +351,7 @@ const dw = (()=>{
                 parent: HTMLElement.prototype,
                 func: function() {
                     // data- is your friend, saving stuff to the element
-                    if (this.style.display !== 'none') {
+                    if (this.style.display !== 'none' && getComputedStyle(this).display !== 'none') {
                         this.dataset.originalDisplay = this.style.display || getComputedStyle(this).display;
                     }
                     this.style.display = 'none';

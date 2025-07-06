@@ -656,7 +656,7 @@ const tf = {
                 // get data
                 registeredRoutes: {},
                 notFoundPage: '404',
-                guardFunc: undefined,
+                guardFunc: [],
                 _initialized: false,
                 _lastUrl: '/',
                 init(startUrl = location.hash.slice(1)){
@@ -694,10 +694,10 @@ const tf = {
                 
                 },
                 checkTrigger(url){
-                    let canceled = false;
-                    let shortcut = undefined;
-                    if(this.guardFunc){
-                        this.guardFunc(url, this._lastUrl, ()=>{
+                    for(i of this.guardFunc){
+                        let canceled = false;
+                        let shortcut = undefined;
+                        i(url, this._lastUrl, ()=>{
                             canceled=true
                         }, (to)=>{
                             shortcut = to;
@@ -758,7 +758,10 @@ const tf = {
                     }
                 },
                 guard(callback){
-                    this.guardFunc = callback; // only one allowed, to prevent code mangaling
+                    this.guardFunc.push(callback);
+                },
+                unguard(callback = '*'){
+                    this.guardFunc = this.guardFunc.filter(e=>callback!='*' && e!=callback)
                 },
                 go(url){
                     let nUrl = this.urlToArr(this.normalizeUrl(url));
