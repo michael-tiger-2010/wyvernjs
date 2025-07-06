@@ -456,7 +456,12 @@ const tf = {
                         } else if (child instanceof Node) {
                             el.appendChild(child);
                         } else {
-                            el.appendChild(document.createTextNode(child));
+                            child = child.split('\n');
+                            for(let i = 0; i < child.length-1; i++){
+                                el.appendChild(document.createTextNode(child[i]));
+                                el.appendChild(document.createElement('br'));
+                            }
+                            el.appendChild(document.createTextNode(child.at(-1)));
                         }
                     });
                     return el;
