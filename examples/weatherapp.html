@@ -54,11 +54,28 @@ weatherApp = {
   // holder for url after search
   weatherAPIEndpoint: undefined,
 
+  component: {
+    locationCard({data_lat, data_lon, display_name, loc_info}){
+      return ['div', {"class": "sect hoverable", "data-lat": data_lat,"data-lon": data_lon}, [
+          ['b', {style:"color:blue"}, [display_name]],['br'],
+          ['i', {}, [loc_info]]
+        ]]
+    },
+    weatherCard({icon, name, detailedForecast}){
+      return ['div', {"class": "sect", style: `background: linear-gradient(90deg,rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 1) 18%, rgba(255, 255, 255, 1) 100%), url("${icon}")`}, [
+          // name of the period, e.g. "Today" "Tonight"
+          ['i',{},[name]], ['br'],
+          // a detailed text forcast
+          ['span',{},[detailedForecast]]
+        ]]
+    }
+  },
+
   // render the search page
   showSearch(){
     if(this.appState.state !== 'init') return;
 
-    // render throuh tree() jsx
+    // render through tree() jsx
     this.el.empty();
     tree([
       ["h3", {}, ["Weather App"]],
@@ -86,16 +103,18 @@ weatherApp = {
     fetchJson(`https://geocode.maps.co/search?q=${q}&api_key=${this.geocodeAPI}`).then(r=>{
       // iterate through matches
       for(let i in r){
-        let el = tree(['div', {"class": "sect hoverable", "data-lat": r[i].lat,"data-lon": r[i].lon}, [
-          ['b', {style:"color:blue"}, [r[i].display_name]],['br'],
-          ['i', {}, [`${r[i]["class"]}, ${r[i]["type"]}`]]
-        ]])[0];
+
+        let el = tree([this.component.locationCard, {
+          data_lat: r[i].lat, 
+          data_long: r[i].long, 
+          display_name:r[i].display_name, 
+          loc_info: `${r[i].class}, ${r[i].type}`,
+        }])[0];
         el.on('click', (ev)=>{
           // set state so stuff can't overwrite the load screen
           this.appState.state = 'loadingToWeather';
           results.empty();
           results.html('<br><i>loading...</i>');
-          console.log(ev.target)
           fetchJson(`https://api.weather.gov/points/${ev.currentTarget.dataset.lat},${ev.currentTarget.dataset.lon}`).then(x=>{
             weatherAPIEndpoint = x.properties.forcast;
             this.getWeather();
@@ -118,13 +137,7 @@ weatherApp = {
     // loop through the weather periods
     for(let i in this.weatherData){
       this.el.append(tree(
-        // create a div with the cool inset-backgroundimage look
-        ['div', {"class": "sect", style: `background: linear-gradient(90deg,rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 1) 18%, rgba(255, 255, 255, 1) 100%), url("${this.weatherData[i].icon}")`}, [
-          // name of the period, e.g. "Today" "Tonight"
-          ['i',{},[this.weatherData[i].name]], ['br'],
-          // a detailed text forcast
-          ['span',{},[this.weatherData[i].detailedForecast]]
-        ]]
+        [weatherCard, {...this.weatherData[i]}]
         )[0])
     }
   },
