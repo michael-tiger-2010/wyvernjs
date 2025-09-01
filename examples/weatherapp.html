@@ -35,7 +35,7 @@
   border-radius: calc(0.5em + 5px);
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@latest/main/wyvern.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mchen_dragon/wyvernjs@1.0.15/main/wyvern.js"></script>
 <div id="app"></div>
 
 <script>
@@ -106,7 +106,7 @@ weatherApp = {
 
         let el = tree([this.component.locationCard, {
           data_lat: r[i].lat, 
-          data_long: r[i].long, 
+          data_lon: r[i].lon, 
           display_name:r[i].display_name, 
           loc_info: `${r[i].class}, ${r[i].type}`,
         }])[0];
@@ -137,7 +137,7 @@ weatherApp = {
     // loop through the weather periods
     for(let i in this.weatherData){
       this.el.append(tree(
-        [weatherCard, {...this.weatherData[i]}]
+        [this.component.weatherCard, {...this.weatherData[i]}]
         )[0])
     }
   },
