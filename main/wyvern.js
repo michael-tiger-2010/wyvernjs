@@ -747,6 +747,10 @@ const diwu = dw;
 * init() will populate window be default. Change to tf to populate tf with methods instead.
 * See docs for usage.
 */
+/* TianFeng (tf)
+* init() will populate window be default. Change to tf to populate tf with methods instead.
+* See docs for usage.
+*/
 
 const tf = {
     init(context=window, options={}){
@@ -1182,14 +1186,63 @@ const tf = {
 
         if(options.tree || options.tree==undefined){
             // so JSX but it's arrays
-            // setAttribute was used before, wasn't a good idea
             // append can happen directly now!
-            window["tree"] = (definition, parent) => {
+            context["tree"] = (definition, parent) => {
+                // first traverse and build from functions
+                const build = (tag, props = {}, children = []) =>{
+                    // quick utility to build an array of children
+                    function parseChildren(children){
+                        return children.reduce((acc,cur)=>{
+                                    if(typeof cur === 'string' || cur instanceof Node) return acc.concat([cur]);
+                                    return acc.concat(build(...cur))
+                                }, [])
+                    }
+                    // if it's a component function
+                    if(typeof tag === 'function'){
+                        const { _plain, ...cleanProps } = props;
+                        // the ._plain flag makes this JSX processor vue-like for one step,
+                        // expecting the function to run tree() somewhere and allowing the function
+                        // to manage the children, which are unprocessed.
+                        // Without ._plain, this JSX processor runs React-style
+                        // which means it will resolve the children tree and then pass it in.
+                        let r = tag(cleanProps, (_plain?children:parseChildren(children)));
+                        if(r instanceof Node) return [r];
+                        if(!r || !Array.isArray(r)) throw new Error('Component functions must return an array, Node, or JSX structure');
+                        // component returned single el
+                        // such as ['div', {}, []] and not [['div', {}, []]]
+                        if(typeof r[0]==='string') r = [r];
+
+                        // pass for normal [['div'...], ['span'...], ...]
+                        // and also [Node, Node, ...]
+                        return r;
+                    }
+                    // there should never be Nodes or strings that are passed through, 
+                    // since the JSX expects [Node, ['div'...], Node]
+                    // not [[Node], ['div'...], [Node]]
+                    return [[tag, props, parseChildren(children)]];
+                }
                 const create = ([tag, props = {}, children = []]) => {
+                    if(tag instanceof Node){
+                        return tag;
+                    }
                     const el = document.createElement(tag);
-                    Object.entries(props).forEach(([k, v]) => el.setAttribute(k,v));
+                    Object.entries(props).forEach(([k, v]) => {
+                        if(k==='text'){
+                            el.innerText = v;
+                        }else if(k==='html'){
+                            el.innerHTML = v;
+                        }else if(k.startsWith('on') && typeof v === 'function'){
+                            el.addEventListener(k.slice(2).toLowerCase(), v);
+                        }else{
+                            if(v === undefined){
+                                el.removeAttribute(k);
+                            }else{
+                                el.setAttribute(k,v)
+                            }
+                        }
+                    });
                     let childrenArr = [];
-                    if(typeof childern === 'string'){
+                    if(typeof children === 'string'){
                         childrenArr = [children];
                     }else{
                         childrenArr = [...(children || [])];
@@ -1201,14 +1254,15 @@ const tf = {
                         } else if (child instanceof Node) {
                             el.appendChild(child);
                         } else {
-                            el.appendChild(document.createTextNode(child));
+                            el.appendChild(document.createTextNode(child.toString()));
                         }
                     });
                     return el;
                 };
 
                 const defs = Array.isArray(definition[0]) ? definition : [definition];
-                const elements = defs.map(create);
+                const builtDefs = defs.map(e => build(...e)); // build returns array, so spread the first element
+                const elements = builtDefs.flat().map(create);
                 // for being nice:
                 if (parent) elements.forEach(el => parent.appendChild(el));
                 return elements;
