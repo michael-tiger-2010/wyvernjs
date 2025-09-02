@@ -1187,7 +1187,7 @@ const tf = {
         if(options.tree || options.tree==undefined){
             // so JSX but it's arrays
             // append can happen directly now!
-            context["tree"] = (definition, parent) => {
+            context["tree"] = (definition, parent, postProcess) => {
                 // first traverse and build from functions
                 const build = (tag, props = {}, children = []) =>{
                     // quick utility to build an array of children
@@ -1264,6 +1264,7 @@ const tf = {
                 const builtDefs = defs.map(e => build(...e)); // build returns array, so spread the first element
                 const elements = builtDefs.flat().map(create);
                 // for being nice:
+                if (postProcess) postProcess(elements);
                 if (parent) elements.forEach(el => parent.appendChild(el));
                 return elements;
             }
