@@ -158,7 +158,7 @@ const dw = (()=>{
                         }
                         return this;
                     } else {
-                        throw new Exception(`addChildren should have array, not ${typeof(children)}`);
+                        throw new Error(`addChildren should have array, not ${typeof(children)}`);
                         return;
                     }
                 }
