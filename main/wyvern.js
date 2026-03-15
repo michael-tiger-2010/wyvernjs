@@ -1189,7 +1189,7 @@ const tf = {
             // append can happen directly now!
             context["tree"] = (definition, parent, postProcess) => {
                 // first traverse and build from functions
-                const build = (tag, props = {}, children = []) =>{
+                const build = (tag, props = {}, children = [], postProcess) =>{
                     // quick utility to build an array of children
                     function parseChildren(children){
                         return children.reduce((acc,cur)=>{
@@ -1219,9 +1219,9 @@ const tf = {
                     // there should never be Nodes or strings that are passed through, 
                     // since the JSX expects [Node, ['div'...], Node]
                     // not [[Node], ['div'...], [Node]]
-                    return [[tag, props, parseChildren(children)]];
+                    return [[tag, props, parseChildren(children), postProcess]];
                 }
-                const create = ([tag, props = {}, children = []]) => {
+                const create = ([tag, props = {}, children = [], postProcess]) => {
                     if(tag instanceof Node){
                         return tag;
                     }
@@ -1257,6 +1257,7 @@ const tf = {
                             el.appendChild(document.createTextNode(child.toString()));
                         }
                     });
+                    postProcess(el);
                     return el;
                 };
 
