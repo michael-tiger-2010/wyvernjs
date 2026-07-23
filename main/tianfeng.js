@@ -95,18 +95,35 @@ const tf = {
             
             const persistedValues = JSON.parse(localStorage.getItem('persist')) || {};
             
-
-            // Create the persist object
-            context.persist = new Proxy({},{
-                set: function(target, prop, value) {
-                    persistedValues[prop] = value;
-                    localStorage.setItem('persist', JSON.stringify(persistedValues));
-                    return value;
-                },
-                get: function(target, prop) {
-                    return persistedValues[prop];
-                }
-            });
+            function createDeepProxy(root, save) {
+                const cache = new WeakMap();
+                const handler = {
+                    set(target, prop, value) {
+                        target[prop] = value;
+                        save();
+                        return true;
+                    },
+                    get(target, prop) {
+                        const value = target[prop];
+                        if (value !== null && typeof value === 'object') {
+                            if (cache.has(value)) return cache.get(value);
+                            const proxy = new Proxy(value, handler);
+                            cache.set(value, proxy);
+                            return proxy;
+                        }
+                        return value;
+                    },
+                    deleteProperty(target, prop) {
+                        delete target[prop];
+                        save();
+                        return true;
+                    }
+                };
+                return new Proxy(root, handler);
+            }
+            
+            const save = () => localStorage.setItem('persist', JSON.stringify(persistedValues));
+            context.persist = createDeepProxy(persistedValues, save);
         }
 
         if (options.bodyInWindow || options.bodyInWindow==undefined) {
